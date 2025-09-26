@@ -1,0 +1,13 @@
+[package]
+name = "chair"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "chair"
+path = "rust/main.rs"
+
+[dependencies]
+axum = { version = "0.8.4", features = ["macros"] }
+tokio = { version = "1.47.1", features = ["rt-multi-thread", "macros", "net", "sync"] }
+tokio-websockets = { version = "0.12.1", features = ["rustls-webpki-roots", "server", "sha1_smol"] }
