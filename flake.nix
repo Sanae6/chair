@@ -37,6 +37,7 @@
               pkgs.fenix.stable.defaultToolchain
               pkgs.fenix.stable.rust-src
             ])
+            pnpm
           ];
         };
       }

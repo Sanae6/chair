@@ -25,7 +25,14 @@
 	},
 	"pnpm": {
 		"onlyBuiltDependencies": [
-			"esbuild"
+			"@tailwindcss/oxide",
+			"esbuild",
+			"skia-canvas"
 		]
+	},
+	"dependencies": {
+		"@types/ws": "^8.18.1",
+		"skia-canvas": "^3.0.8",
+		"ws": "^8.18.3"
 	}
 }
