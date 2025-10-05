@@ -8,6 +8,7 @@ export default defineConfig({
 		hmr: {
 			port: 5174,
 		},
+		allowedHosts: true
 	},
 	plugins: [
 		tailwindcss(),
