@@ -4,7 +4,15 @@ import { type CanvasRenderingContext2D as SkiaCanvasRenderingContext2D, Image as
 
 const IS_BROWSER = "window" in globalThis;
 export class Surface {
-  constructor(public size: Vec2, private context: SkiaCanvasRenderingContext2D | CanvasRenderingContext2D) { }
+  constructor(public size: Vec2, private context: SkiaCanvasRenderingContext2D | CanvasRenderingContext2D) {
+    this.clear();
+  }
+
+  clear() {
+    this.context.fillStyle = "#FFFFFF";
+    this.context.fillRect(0, 0, this.size.x, this.size.y);
+    console.debug("cleared canvas");
+  }
 
   handleSync(imageDataUrl: string) {
     const image = new (IS_BROWSER ? Image : SkiaImage)();
@@ -16,11 +24,14 @@ export class Surface {
   }
 
   handleOperation(operation: Operation) {
+    console.log("performing", operation.type);
     switch (operation.type) {
       case "pencil":
-        this.context.strokeRect(
-          operation.position.x - operation.diameter / 2,
-          operation.position.y - operation.diameter / 2,
+        this.context.fillStyle = operation.color;
+        const offset = Math.floor(operation.diameter / 2);
+        this.context.fillRect(
+          operation.position.x - offset,
+          operation.position.y - offset,
           operation.diameter,
           operation.diameter,
         );

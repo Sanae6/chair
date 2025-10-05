@@ -2,48 +2,58 @@ import type { Packet } from "$lib/useful/packets";
 
 export class Connection {
   // connection factory
-  static async connect(room: string): Promise<Connection> {
-    const connection = new Connection(new WebSocket("/"), room);
+  static async connect(user: string, room: string, canvas: HTMLCanvasElement): Promise<Connection> {
+    const connection = new Connection(new WebSocket("/"), user, room);
+    console.log("opening")
     connection.waitOpen();
+    console.log("open")
     return connection;
   }
 
   private handlers: Map<string, (packet: any) => void> = new Map;
-  private isOpen: boolean = false;
-  private openFunc: (() => void) | undefined;
-  constructor(private socket: WebSocket, room: string) {
+  private isConnected: boolean = false;
+  private onConnected: (() => void) | undefined;
+
+  constructor(private socket: WebSocket, username: string, room: string) {
     socket.binaryType = "arraybuffer";
     socket.addEventListener("open", () => {
       this.send({
         type: "connect",
         room,
-        name: "Aubrey",
+        name: username,
       })
     });
 
     socket.addEventListener("message", (event) => {
-      const data = event.data as ArrayBuffer;
-      this.handleMessage(JSON.parse(new TextDecoder().decode(data)));
+      this.handleMessage(JSON.parse(event.data));
     })
+
+    if (import.meta.hot)
+      import.meta.hot.dispose(() => {
+        socket.close(1000);
+      });
   }
 
   public send(message: Packet) {
     this.socket.send(JSON.stringify(message));
   }
 
-  private handleMessage(message: object) {
-    this.isOpen = true;
-    if (this.openFunc) this.openFunc();
-    this.openFunc = undefined;
+  public setHandler<T extends Packet["type"], P extends Packet & { type: T }>(type: T | never, handler: (packet: P) => void) {
+    this.handlers.set(type, handler);
+  }
 
-    message
+  private handleMessage(message: Packet) {
+    this.isConnected = true;
+    if (this.onConnected) this.onConnected();
+    this.onConnected = undefined;
+
+    const handler = this.handlers.get(message.type);
+    if (handler) handler(message);
   }
 
   private async waitOpen() {
-    if (this.isOpen) return true;
+    if (this.isConnected) return true;
 
-    await new Promise(res => this.openFunc = res as any);
+    await new Promise(res => this.onConnected = res as any);
   }
-
-
 }

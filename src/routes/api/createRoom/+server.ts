@@ -12,7 +12,7 @@ export function POST({ url }) {
   try { size.x = parseInt(width) } catch { throw new Error("width must be an integer") }
   try { size.y = parseInt(height) } catch { throw new Error("height must be an integer") }
 
-  RoomManager.instance().createRoom(room, size);
+  const roomId = RoomManager.instance().createRoom(room, size);
 
-  return json({}, { status: 200 })
+  return json(roomId, { status: 200 })
 }
