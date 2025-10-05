@@ -28,10 +28,13 @@ export class Connection {
       this.handleMessage(JSON.parse(event.data));
     })
 
-    if (import.meta.hot)
-      import.meta.hot.dispose(() => {
+    if (import.meta.hot) {
+      const close = () => {
+        import.meta.hot?.off("vite:beforeUpdate", close);
         socket.close(1000);
-      });
+      };
+      import.meta.hot.on("vite:beforeUpdate", close);
+    }
   }
 
   public send(message: Packet) {
