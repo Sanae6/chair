@@ -1,6 +1,6 @@
 import type { Operation } from "./operation";
 
-export type Packet = 
+export type Packet =
   | ConnectPacket
   | OperationPacket
   | SyncPacket;

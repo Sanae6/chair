@@ -1,0 +1,30 @@
+import type { Operation } from "$lib/useful/operation";
+import type { Vec2 } from "$lib/useful/prims";
+import { type CanvasRenderingContext2D as SkiaCanvasRenderingContext2D, Image as SkiaImage } from "skia-canvas";
+
+const IS_BROWSER = "window" in globalThis;
+export class Surface {
+  constructor(public size: Vec2, private context: SkiaCanvasRenderingContext2D | CanvasRenderingContext2D) { }
+
+  handleSync(imageDataUrl: string) {
+    const image = new (IS_BROWSER ? Image : SkiaImage)();
+    image.src = imageDataUrl;
+    image.onload = () => {
+      // @ts-ignore
+      this.context.drawImage(image, 0, 0);
+    };
+  }
+
+  handleOperation(operation: Operation) {
+    switch (operation.type) {
+      case "pencil":
+        this.context.strokeRect(
+          operation.position.x - operation.diameter / 2,
+          operation.position.y - operation.diameter / 2,
+          operation.diameter,
+          operation.diameter,
+        );
+        break;
+    }
+  }
+}
