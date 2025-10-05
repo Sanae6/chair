@@ -6,24 +6,18 @@
       url = "github:Sanae6/gowin-eda-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    fenix = {
-      url = "github:nix-community/fenix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
   outputs =
     {
       nixpkgs,
       flake-utils,
-      fenix,
       ...
     }@inputs:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        overlays = [ fenix.overlays.default ];
         pkgs = import nixpkgs {
-          inherit system overlays;
+          inherit system;
         };
       in
       with pkgs;
@@ -33,10 +27,6 @@
         packages.default = pkgs.callPackage ./package.nix { };
         devShells.default = mkShell {
           buildInputs = [
-            (pkgs.fenix.combine [
-              pkgs.fenix.stable.defaultToolchain
-              pkgs.fenix.stable.rust-src
-            ])
             pnpm
           ];
         };
