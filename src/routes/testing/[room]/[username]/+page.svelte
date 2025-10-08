@@ -1,10 +1,10 @@
 <script lang="ts">
   import { Connection } from "$lib/controller/connection.client";
-  import type { Vec2 } from "$lib/useful/prims";
+  import type { Vec2 } from "$lib/network/prims";
   import { onMount } from "svelte";
   import type { PageProps } from "./$types";
   import { Surface } from "$lib/model/surface";
-  import type { Operation } from "$lib/useful/operation";
+  import type { Operation } from "$lib/packets/operation";
 
   let canvas: HTMLCanvasElement;
   let connection: Connection;

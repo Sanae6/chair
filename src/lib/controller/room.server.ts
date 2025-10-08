@@ -1,10 +1,10 @@
-import type { Vec2 } from "$lib/useful/prims";
+import type { Vec2 } from "$lib/network/prims";
 import { Canvas } from "skia-canvas";
 import { Surface } from "../model/surface";
-import { cachedWritable, subscribe, type Cached, type CachedWritable } from "$lib/useful/stores";
+import { cachedWritable, subscribe, type CachedWritable } from "$lib/util/stores";
 import type { User } from "../model/user.server";
-import type { Operation } from "$lib/useful/operation";
-import type { OperationPacket, Packet } from "$lib/useful/packets";
+import type { Operation } from "$lib/network/operation";
+import type { OperationPacket, Packet } from "$lib/network/packets";
 
 export type UserOperation = {
   username: string,
@@ -22,7 +22,7 @@ export class Room {
     this.canvas = new Canvas(size.x, size.y);
     this.surface = cachedWritable(new Surface(size, this.canvas.getContext("2d")));
 
-    // if the users list or the surface changes, resync changes to the user
+    // if the users list or the surface changes, sync changes to the user
     subscribe([this.surface, this.users], ([_surface, _users]) => {
       console.log("broadcasting surface");
       this.broadcast({
@@ -51,9 +51,7 @@ export class Room {
   }
 
   public handleOperation(packet: OperationPacket, user: User) {
-    console.log("preupdating");
     this.changes.update(changes => {
-      console.log("handling an operation change");
       changes.push({ username: user.name, operation: packet.operation });
       return changes;
     })

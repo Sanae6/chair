@@ -1,5 +1,5 @@
-import type { Operation } from "$lib/useful/operation";
-import type { Vec2 } from "$lib/useful/prims";
+import type { Operation } from "$lib/network/operation";
+import type { Vec2 } from "$lib/network/prims";
 import { type CanvasRenderingContext2D as SkiaCanvasRenderingContext2D, Image as SkiaImage } from "skia-canvas";
 
 const IS_BROWSER = "window" in globalThis;

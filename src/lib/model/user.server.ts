@@ -1,4 +1,4 @@
-import type { Packet } from "$lib/useful/packets";
+import type { Packet } from "$lib/network/packets";
 import type { WebSocket } from "ws";
 import type { Room } from "../controller/room.server";
 

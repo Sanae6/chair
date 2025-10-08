@@ -1,4 +1,4 @@
-import type { Packet } from "$lib/useful/packets";
+import type { Packet } from "$lib/network/packets";
 
 export class Connection {
   // connection factory

@@ -1,6 +1,6 @@
 import { RoomManager } from "$lib/controller/roomManager.server";
 import { User } from "$lib/model/user.server";
-import type { ConnectPacket, Packet } from "$lib/useful/packets";
+import type { ConnectPacket, Packet } from "$lib/network/packets";
 import type { PluginOption, ViteDevServer } from "vite"
 import WebSocket, { WebSocketServer } from "ws";
 

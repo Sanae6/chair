@@ -1,5 +1,5 @@
 import { Room } from "$lib/controller/room.server";
-import type { Vec2 } from "$lib/useful/prims";
+import type { Vec2 } from "$lib/network/prims";
 
 export class RoomManager {
   static instance(): RoomManager {
