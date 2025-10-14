@@ -26,16 +26,34 @@ export class Surface {
   handleOperation(operation: Operation) {
     console.log("performing", operation.type);
     switch (operation.type) {
-      case "pencil":
+      case "pencil": {
         this.context.fillStyle = operation.color;
-        const offset = Math.floor(operation.diameter / 2);
+        const offset = Math.floor(operation.settings.brushSize / 2);
         this.context.fillRect(
           operation.position.x - offset,
           operation.position.y - offset,
-          operation.diameter,
-          operation.diameter,
+          operation.settings.brushSize,
+          operation.settings.brushSize,
         );
-        break;
+      }  break;
+      case "eraser": {
+        const offset = Math.floor(operation.settings.brushSize / 2);
+        this.context.clearRect(
+          operation.position.x - offset,
+          operation.position.y - offset,
+          operation.settings.brushSize,
+          operation.settings.brushSize,
+        );
+      }  break;
+      case "rect": {
+        this.context.fillStyle = operation.color;
+        this.context.fillRect(
+          operation.position.x,
+          operation.position.y,
+          operation.position2.x-operation.position.x,
+          operation.position2.y-operation.position.y,
+        );
+      }  break;
     }
   }
 }
