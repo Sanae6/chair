@@ -8,6 +8,7 @@
   import { defaultToolSettings, tools, type Tool } from "$lib/controller/tool";
   import { preventDefault } from "svelte/legacy";
     import { toEditorSettings } from "typescript";
+  import background from '$lib/assets/background.png';
 
   let canvas: HTMLCanvasElement;
   let connection: Connection;
@@ -92,41 +93,230 @@
   }
 </script>
 
-<div class="flex justify-center content-center h-full w-full">
-  <canvas
-    bind:this={canvas}
-    width="32"
-    height="32"
-    onmousedown={mouseDown}
-    onmouseup={mouseUp}
-    onmousemove={mouseMove}
-    oncontextmenu={(e) => {e.preventDefault()}}
-  ></canvas>
-  <div class="flex flex-col gap-2 p-1">
-  {#each tools as tool}
-    <button onclick={() => currentTool = tool} class="border-2 border-solid p-1">
-      {tool.displayName}
-    </button>
-  {/each}
-  </div>
-  <div class="flex flex-col gap-2 p-1">
-  {#if currentTool.applicableSettings.has("brushSize")}
-  <button onclick={() => currentTool.settings.brushSize += 1} class="border-2 border-solid p-1">
-    Increase Brush Size
-  </button>
-  {currentTool.settings.brushSize}
-  <button onclick={() => currentTool.settings.brushSize = Math.max(1, currentTool.settings.brushSize - 1)} class="border-2 border-solid p-1">
-    Decrease Brush Size
-  </button>
-  {/if}
-  </div>
+<link href='https://fonts.googleapis.com/css?family=VT323' rel='stylesheet' type='text/css'>
 
+<div class="background">  
+    <img src = {background} alt = "whoops"/>
+</div>
+
+<div class = "drawingSpace">
+  <div class = "overlay">
+    <div class = "flex justify-center content-center h-full w-full">
+      <canvas
+        bind:this={canvas}
+        width="32"
+        height="32"
+        onmousedown={mouseDown}
+        onmouseup={mouseUp}
+        onmousemove={mouseMove}
+        oncontextmenu={(e) => {e.preventDefault()}}
+      ></canvas>
+      <div class="flex flex-col gap-2 p-1">
+      {#each tools as tool}
+        <button onclick={() => currentTool = tool} class="pixelButton">
+          <p>{tool.displayName}</p>
+        </button>
+      {/each}
+      </div>
+      <div class="flex flex-col gap-2 p-1">
+        <div>
+          {#if currentTool.applicableSettings.has("brushSize")}
+          <div class="pixel"><p>Brush Size</p></div>
+          <button onclick={() => currentTool.settings.brushSize += 1} class="pixelButton">
+          <p>+</p>
+          </button>
+          <div class="pixel"><p>{currentTool.settings.brushSize}</p></div>
+          <button onclick={() => currentTool.settings.brushSize = Math.max(1, currentTool.settings.brushSize - 1)} class="pixelButton">
+            <p>-</p>
+          </button>
+          {/if}
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <style>
   canvas {
     outline: auto 20px cornflowerblue;
-    width: 50%;
+    width: 74.7%;
+    height:100%;
     image-rendering: pixelated;
+  }
+
+  .background {
+    position:absolute;
+    image-rendering:pixelated;
+    width: 100%;
+    height: 100%;
+  }
+
+  .background img{
+    width:100%;
+    height:100%;
+    object-fit: fill;
+    object-position: center;
+  }
+
+  .overlay {
+    position: relative;
+  }
+
+  .drawingSpace::before {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: -10px;
+    right: -10px;
+    background: linear-gradient(to right, #6E6E6E 50%, #404040 50%);
+    z-index: -1;
+  }
+
+  .drawingSpace::after {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: -6px;
+    right: -6px;
+    background: #4F4F4F;
+    border-style:solid;
+    border-width:4px;
+    border-color:#6E6E6E #404040 #404040 #6E6E6E;
+    z-index: -1;
+  }
+
+  .drawingSpace {
+    position: fixed;
+    object-position: center;
+    padding: 12px 12px 12px 16px;
+    height: 100%;
+    width: 66%;
+    margin-left: 17%;
+    margin-right: 17%;
+    object-fit: fill;
+    background:linear-gradient(to bottom, #6E6E6E 50%, #404040 50%);
+    z-index: 2;
+  }
+
+  .pixelButton {   
+    position: relative;
+    display: inline-block;
+    vertical-align: top;
+    text-transform: uppercase;
+    
+    cursor: pointer;
+    
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  .pixelButton:active {
+    top: 2px;
+  } 
+
+  .pixelButton {
+    position: relative;
+    display: grid;
+    margin: 10px;
+    place-items:center;
+  }
+
+  .pixelButton p{
+    font-family: 'VT323';
+    text-transform: uppercase;
+    font-size: 20px;
+    color: rgb(224, 224, 224);
+  }
+
+  .pixelButton::before {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: -10px;
+    right: -10px;
+    background: linear-gradient(to right, #6E6E6E 50%, #404040 50%);
+    z-index: -1;
+  }
+
+  .pixelButton::after {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: -6px;
+    right: -6px;
+    background: #575757;
+    border-style:solid;
+    border-width:4px;
+    border-color:#6E6E6E #404040 #404040 #6E6E6E;
+    z-index: -1;
+  }
+
+  .pixelButton {
+    padding: 10px 10px;
+    position: relative;
+    background:linear-gradient(to bottom, #6E6E6E 50%, #404040 50%);
+    width: auto;
+    z-index: 2;
+  }
+
+  .pixel {
+    position: relative;
+    display: grid;
+    margin: 10px;
+    place-items:center;
+  }
+
+  .pixel p{
+    font-family: 'VT323';
+    text-transform: uppercase;
+    font-size: 20px;
+    color: rgb(224, 224, 224);
+  }
+
+  .pixel::before {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: -10px;
+    right: -10px;
+    background: linear-gradient(to right, #6E6E6E 50%, #404040 50%);
+    z-index: -1;
+  }
+
+  .pixel::after {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: -6px;
+    right: -6px;
+    background: #575757;
+    border-style:solid;
+    border-width:4px;
+    border-color:#6E6E6E #404040 #404040 #6E6E6E;
+    z-index: -1;
+  }
+
+  .pixel{
+    padding: 10px 10px;
+    position: relative;
+    background:linear-gradient(to bottom, #6E6E6E 50%, #404040 50%);
+    width: auto;
+    z-index: 2;
   }
 </style>
