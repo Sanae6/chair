@@ -1,22 +1,20 @@
 <script lang="ts">
   import { Connection } from "$lib/controller/connection.client";
-  import type { Color, Vec2 } from "$lib/network/prims";
+  import { transformFromTranslation, transformFromScaling, composeTransforms, type Color, type Transform2D, type Vec2 } from "$lib/network/prims";
   import { onMount } from "svelte";
   import type { PageProps } from "./$types";
   import { Surface } from "$lib/model/surface";
   import type { Operation } from "$lib/network/operation";
-  import { defaultToolSettings, tools, type Tool } from "$lib/controller/tool";
-  import { preventDefault } from "svelte/legacy";
-  import { toEditorSettings } from "typescript";
+  import { tools, type Tool } from "$lib/controller/tool";
   import background from "$lib/assets/background.png";
+    import { applyInverseTransform } from "$lib/network/prims";
 
   let surfaceCanvas: OffscreenCanvas;
   let displayCanvas: HTMLCanvasElement;
   let connection: Connection;
   let surface: Surface;
 
-  let displayScale: number = 16;
-  let displayTranslation: Vec2 = {x: 0, y: 0};
+  let displayTransform2D: Transform2D = transformFromScaling(16, 16);
 
   let { data }: PageProps = $props();
 
@@ -52,7 +50,7 @@
 
   let drawing = false;
   function draw(event: MouseEvent) {
-    const position = clientToCanvasCoords({x: event.clientX, y: event.clientY});
+    const position = clientToSurfaceCoords({x: event.clientX, y: event.clientY});
     if (position.x == previousPos.x && position.y == previousPos.y) return;
     previousPos = position;
 
@@ -74,8 +72,7 @@
 
     displayCtx.clearRect(0, 0, displayCanvas.width, displayCanvas.height);
     displayCtx.save();
-    displayCtx.translate(displayTranslation.x,displayTranslation.y);
-    displayCtx.scale(displayScale,displayScale);
+    displayCtx.setTransform(displayTransform2D);
     displayCtx.drawImage(surfaceCanvas, 0, 0);
     // Draws terrible looking gridlines between pixels for debugging
     // for(let i = 0; i < 32; i++) {
@@ -92,15 +89,20 @@
     displayCtx.restore();
   }
 
-  function clientToCanvasCoords(clientPos: Vec2): Vec2 {
+  function clientToDisplayCanvasCoords(clientPos: Vec2): Vec2 {
     const rect = displayCanvas.getClientRects()[0];
     return {
-      x: Math.floor(
-        ((clientPos.x - rect.left) / (rect.width / displayCanvas.width) - displayTranslation.x) / displayScale,
-      ),
-      y: Math.floor(
-        ((clientPos.y - rect.top) / (rect.height / displayCanvas.height) - displayTranslation.y) / displayScale,
-      ),
+      x: (clientPos.x - rect.left) / (rect.width / displayCanvas.width),
+      y: (clientPos.y - rect.top) / (rect.height / displayCanvas.height),
+    };
+  }
+
+  function clientToSurfaceCoords(clientPos: Vec2): Vec2 {
+    const displayCanvasCoords = clientToDisplayCanvasCoords(clientPos);
+    const unroundedCoords = applyInverseTransform(displayTransform2D, displayCanvasCoords);
+    return {
+      x: Math.floor(unroundedCoords.x),
+      y: Math.floor(unroundedCoords.y),
     };
   }
 
@@ -108,7 +110,7 @@
     if ((event.buttons & 1) != 1) return;
     drawing = true;
 
-    firstPos = clientToCanvasCoords({x: event.clientX, y: event.clientY});
+    firstPos = clientToSurfaceCoords({x: event.clientX, y: event.clientY});
     if (currentTool.applicationType == "click_drag" || currentTool.applicationType == "single_click") {
       draw(event);
     }
@@ -125,10 +127,27 @@
   }
 
   function mouseMove(event: MouseEvent) {
-    if ((event.buttons & 1) != 1 || !drawing) return;
-    if (currentTool.applicationType == "click_drag") {
-      draw(event);
-    }
+    if ((event.buttons & 1) == 1 && drawing) {
+      if (currentTool.applicationType == "click_drag") {
+        draw(event);
+      }
+    } else if ((event.buttons & 4) == 4) {
+      const rect = displayCanvas.getClientRects()[0];
+      // Mouse movement transformed to be relative to displayCanvas size
+      let movement: Vec2 = {x: event.movementX*(displayCanvas.width/rect.width), y: event.movementY*(displayCanvas.height/rect.height)};
+
+      displayTransform2D = composeTransforms(transformFromTranslation(movement.x, movement.y), displayTransform2D);
+      refreshDisplayCanvas();
+    };
+  }
+
+  function wheel(event: WheelEvent) {
+    let mousePos = clientToDisplayCanvasCoords({x: event.clientX, y: event.clientY});
+    let scaleFactor = 1-Math.sign(event.deltaY)*0.1;
+    displayTransform2D = composeTransforms(transformFromTranslation(-mousePos.x, -mousePos.y), displayTransform2D);
+    displayTransform2D = composeTransforms(transformFromScaling(scaleFactor, scaleFactor), displayTransform2D);
+    displayTransform2D = composeTransforms(transformFromTranslation(mousePos.x, mousePos.y), displayTransform2D);
+    refreshDisplayCanvas();
   }
 </script>
 
@@ -148,6 +167,7 @@
         onmousedown={mouseDown}
         onmouseup={mouseUp}
         onmousemove={mouseMove}
+        onwheel={wheel}
         oncontextmenu={(e) => {e.preventDefault()}}
       ></canvas>
       <div class="flex flex-col gap-2 p-1">
