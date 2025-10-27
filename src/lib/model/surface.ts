@@ -11,7 +11,7 @@ export class Surface {
   }
 
   clear() {
-    this.context.fillStyle = "#FFFFFF";
+    this.context.fillStyle = "#FFFFFF00";
     this.context.fillRect(0, 0, this.size.x, this.size.y);
     this.notifyDraw();
     console.debug("cleared canvas");

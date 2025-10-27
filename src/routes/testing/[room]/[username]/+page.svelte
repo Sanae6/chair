@@ -10,6 +10,7 @@
     import { applyInverseTransform } from "$lib/network/prims";
 
   let surfaceCanvas: OffscreenCanvas;
+  let backgroundCanvas: OffscreenCanvas;
   let displayCanvas: HTMLCanvasElement;
   let connection: Connection;
   let surface: Surface;
@@ -26,9 +27,11 @@
 
     connection = await Connection.connect(data.username, data.room);
     surfaceCanvas = new OffscreenCanvas(32, 32);
+    backgroundCanvas = new OffscreenCanvas(32, 32);
     surface = new Surface({ x: 32, y: 32 }, surfaceCanvas.getContext("2d")!);
     surface.clear();
     surface.subscribeDraw(refreshDisplayCanvas);
+    drawBackgroundCanvas();
     refreshDisplayCanvas();
     connection.setHandler("sync", (packet) => {
       console.log("received sync", packet);
@@ -73,6 +76,7 @@
     displayCtx.clearRect(0, 0, displayCanvas.width, displayCanvas.height);
     displayCtx.save();
     displayCtx.setTransform(displayTransform2D);
+    displayCtx.drawImage(backgroundCanvas, 0, 0);
     displayCtx.drawImage(surfaceCanvas, 0, 0);
     // Draws terrible looking gridlines between pixels for debugging
     // for(let i = 0; i < 32; i++) {
@@ -87,6 +91,23 @@
     //   displayCtx.stroke();
     // }
     displayCtx.restore();
+  }
+
+  function drawBackgroundCanvas() {
+    let backgroundCtxOptional: OffscreenCanvasRenderingContext2D | null = backgroundCanvas.getContext("2d");
+    if (backgroundCtxOptional == null) return;
+    let backgroundCtx: OffscreenCanvasRenderingContext2D = backgroundCtxOptional;
+    
+    backgroundCtx.fillRect(0, 0, 32, 32);
+    const color1: Color = "#777777";
+    const color2: Color = "#bbbbbb";
+    const gridTileWidth: number = 4;
+    for (let y = 0; y < Math.floor(32/gridTileWidth); y++) {
+      for (let x = 0; x < Math.floor(32/gridTileWidth); x++) {
+        backgroundCtx.fillStyle = (x+y)%2==0 ? color1 : color2;
+        backgroundCtx.fillRect(x*gridTileWidth, y*gridTileWidth, gridTileWidth, gridTileWidth);
+      }
+    }
   }
 
   function clientToDisplayCanvasCoords(clientPos: Vec2): Vec2 {
