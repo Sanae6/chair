@@ -9,7 +9,7 @@ export type Tool = {
     displayName: String,
     settings: ToolSettings,
     applicableSettings: Set<keyof ToolSettings>
-    applicationType: "single_click" | "click_drag" | "click_release",
+    applicationType: "single_click" | "click_drag" | "click_release" | "pan",
     generateOperation?(startPosition: Vec2, endPosition: Vec2, color: Color): Operation,
     clientOperation?(): void,
 };
@@ -48,6 +48,12 @@ export const tools: Array<Tool>= [
             let settings = this.settings
             return {settings, position: startPosition, position2: endPosition, color: color, type: "rect"}
         }
+    },
+    {
+        displayName: "Pan",
+        settings: {... defaultToolSettings},
+        applicableSettings: new Set(),
+        applicationType: "pan",
     },
     {
         displayName: "ClientTest",

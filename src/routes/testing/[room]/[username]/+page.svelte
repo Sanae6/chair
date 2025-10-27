@@ -127,11 +127,9 @@
   }
 
   function mouseMove(event: MouseEvent) {
-    if ((event.buttons & 1) == 1 && drawing) {
-      if (currentTool.applicationType == "click_drag") {
-        draw(event);
-      }
-    } else if ((event.buttons & 4) == 4) {
+    if ((event.buttons & 1) == 1 && currentTool.applicationType == "click_drag" && drawing ) {
+      draw(event);
+    } else if ((event.buttons & 4) == 4 || (event.buttons & 1) == 1 && currentTool.applicationType == "pan") {
       const rect = displayCanvas.getClientRects()[0];
       // Mouse movement transformed to be relative to displayCanvas size
       let movement: Vec2 = {x: event.movementX*(displayCanvas.width/rect.width), y: event.movementY*(displayCanvas.height/rect.height)};
