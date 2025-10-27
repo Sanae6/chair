@@ -7,19 +7,31 @@
   import type { Operation } from "$lib/network/operation";
   import { defaultToolSettings, tools, type Tool } from "$lib/controller/tool";
   import { preventDefault } from "svelte/legacy";
-    import { toEditorSettings } from "typescript";
-  import background from '$lib/assets/background.png';
+  import { toEditorSettings } from "typescript";
+  import background from "$lib/assets/background.png";
 
-  let canvas: HTMLCanvasElement;
+  let surfaceCanvas: OffscreenCanvas;
+  let displayCanvas: HTMLCanvasElement;
   let connection: Connection;
   let surface: Surface;
+
+  let displayScale: number = 16;
+  let displayTranslation: Vec2 = {x: 0, y: 0};
 
   let { data }: PageProps = $props();
 
   onMount(async () => {
-    connection = await Connection.connect(data.username, data.room, canvas);
-    surface = new Surface({ x: 32, y: 32 }, canvas.getContext("2d")!);
+    let displayCtxOptional: CanvasRenderingContext2D | null = displayCanvas.getContext("2d");
+    if (displayCtxOptional == null) return;
+    let displayCtx: CanvasRenderingContext2D = displayCtxOptional;
+    displayCtx.imageSmoothingEnabled = false;
+
+    connection = await Connection.connect(data.username, data.room);
+    surfaceCanvas = new OffscreenCanvas(32, 32);
+    surface = new Surface({ x: 32, y: 32 }, surfaceCanvas.getContext("2d")!);
     surface.clear();
+    surface.subscribeDraw(refreshDisplayCanvas);
+    refreshDisplayCanvas();
     connection.setHandler("sync", (packet) => {
       console.log("received sync", packet);
       surface.handleSync(packet.url);
@@ -40,15 +52,13 @@
 
   let drawing = false;
   function draw(event: MouseEvent) {
-    const rect = canvas.getClientRects()[0];
-    
     const position = clientToCanvasCoords({x: event.clientX, y: event.clientY});
     if (position.x == previousPos.x && position.y == previousPos.y) return;
     previousPos = position;
 
     // todo: replace with actual variable that controls colour
     let color: Color = "cornflowerblue";
-    
+
     if (currentTool.generateOperation != undefined) {
       handleOperation(currentTool.generateOperation(firstPos, position, color));
     }
@@ -57,11 +67,40 @@
     }
   }
 
+  function refreshDisplayCanvas() {
+    let displayCtxOptional: CanvasRenderingContext2D | null = displayCanvas.getContext("2d");
+    if (displayCtxOptional == null) return;
+    let displayCtx: CanvasRenderingContext2D = displayCtxOptional;
+
+    displayCtx.clearRect(0, 0, displayCanvas.width, displayCanvas.height);
+    displayCtx.save();
+    displayCtx.translate(displayTranslation.x,displayTranslation.y);
+    displayCtx.scale(displayScale,displayScale);
+    displayCtx.drawImage(surfaceCanvas, 0, 0);
+    // Draws terrible looking gridlines between pixels for debugging
+    // for(let i = 0; i < 32; i++) {
+    //   displayCtx.lineWidth = 1/displayScale;
+    //   displayCtx.beginPath();
+    //   displayCtx.moveTo(i, 0);
+    //   displayCtx.lineTo(i, 32);
+    //   displayCtx.stroke();
+    //   displayCtx.beginPath();
+    //   displayCtx.moveTo(0, i);
+    //   displayCtx.lineTo(32, i);
+    //   displayCtx.stroke();
+    // }
+    displayCtx.restore();
+  }
+
   function clientToCanvasCoords(clientPos: Vec2): Vec2 {
-    const rect = canvas.getClientRects()[0];
+    const rect = displayCanvas.getClientRects()[0];
     return {
-      x: Math.floor((clientPos.x - rect.left) / (rect.width / canvas.width)),
-      y: Math.floor((clientPos.y - rect.top) / (rect.height / canvas.height)),
+      x: Math.floor(
+        ((clientPos.x - rect.left) / (rect.width / displayCanvas.width) - displayTranslation.x) / displayScale,
+      ),
+      y: Math.floor(
+        ((clientPos.y - rect.top) / (rect.height / displayCanvas.height) - displayTranslation.y) / displayScale,
+      ),
     };
   }
 
@@ -95,7 +134,7 @@
 
 <link href='https://fonts.googleapis.com/css?family=VT323' rel='stylesheet' type='text/css'>
 
-<div class="background">  
+<div class="background">
     <img src = {background} alt = "whoops"/>
 </div>
 
@@ -103,32 +142,32 @@
   <div class = "overlay">
     <div class = "flex justify-center content-center h-full w-full">
       <canvas
-        bind:this={canvas}
-        width="32"
-        height="32"
+        bind:this={displayCanvas}
+        width="512"
+        height="512"
         onmousedown={mouseDown}
         onmouseup={mouseUp}
         onmousemove={mouseMove}
         oncontextmenu={(e) => {e.preventDefault()}}
       ></canvas>
       <div class="flex flex-col gap-2 p-1">
-      {#each tools as tool}
+        {#each tools as tool}
         <button onclick={() => currentTool = tool} class="pixelButton">
-          <p>{tool.displayName}</p>
-        </button>
-      {/each}
+            <p>{tool.displayName}</p>
+          </button>
+        {/each}
       </div>
       <div class="flex flex-col gap-2 p-1">
         <div>
           {#if currentTool.applicableSettings.has("brushSize")}
-          <div class="pixel"><p>Brush Size</p></div>
+            <div class="pixel"><p>Brush Size</p></div>
           <button onclick={() => currentTool.settings.brushSize += 1} class="pixelButton">
-          <p>+</p>
-          </button>
-          <div class="pixel"><p>{currentTool.settings.brushSize}</p></div>
+              <p>+</p>
+            </button>
+            <div class="pixel"><p>{currentTool.settings.brushSize}</p></div>
           <button onclick={() => currentTool.settings.brushSize = Math.max(1, currentTool.settings.brushSize - 1)} class="pixelButton">
-            <p>-</p>
-          </button>
+              <p>-</p>
+            </button>
           {/if}
         </div>
       </div>
@@ -202,14 +241,14 @@
     z-index: 2;
   }
 
-  .pixelButton {   
+  .pixelButton {
     position: relative;
     display: inline-block;
     vertical-align: top;
     text-transform: uppercase;
-    
+
     cursor: pointer;
-    
+
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     -khtml-user-select: none;
@@ -220,7 +259,7 @@
 
   .pixelButton:active {
     top: 2px;
-  } 
+  }
 
   .pixelButton {
     position: relative;

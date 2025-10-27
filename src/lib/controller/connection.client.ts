@@ -2,7 +2,7 @@ import type { Packet } from "$lib/network/packets";
 
 export class Connection {
   // connection factory
-  static async connect(user: string, room: string, canvas: HTMLCanvasElement): Promise<Connection> {
+  static async connect(user: string, room: string): Promise<Connection> {
     const connection = new Connection(new WebSocket("/"), user, room);
     console.log("opening")
     connection.waitOpen();

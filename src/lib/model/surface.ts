@@ -4,13 +4,16 @@ import { type CanvasRenderingContext2D as SkiaCanvasRenderingContext2D, Image as
 
 const IS_BROWSER = "window" in globalThis;
 export class Surface {
-  constructor(public size: Vec2, private context: SkiaCanvasRenderingContext2D | CanvasRenderingContext2D) {
+  #drawSubscriptions: Array<() => void> = []
+
+  constructor(public size: Vec2, private context: SkiaCanvasRenderingContext2D | CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) {
     this.clear();
   }
 
   clear() {
     this.context.fillStyle = "#FFFFFF";
     this.context.fillRect(0, 0, this.size.x, this.size.y);
+    this.notifyDraw();
     console.debug("cleared canvas");
   }
 
@@ -20,6 +23,7 @@ export class Surface {
     image.onload = () => {
       // @ts-ignore
       this.context.drawImage(image, 0, 0);
+      this.notifyDraw();
     };
   }
 
@@ -54,6 +58,17 @@ export class Surface {
           operation.position2.y-operation.position.y,
         );
       }  break;
+    }
+    this.notifyDraw();
+  }
+
+  subscribeDraw(run: () => void) {
+    this.#drawSubscriptions.push(run);
+  }
+
+  notifyDraw() {
+    for (const drawCallback of this.#drawSubscriptions) {
+      drawCallback();
     }
   }
 }
