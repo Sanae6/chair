@@ -7,7 +7,8 @@
   import type { Operation } from "$lib/network/operation";
   import { tools, type Tool } from "$lib/controller/tool";
   import background from "$lib/assets/background.png";
-    import { applyInverseTransform } from "$lib/network/prims";
+  import { applyInverseTransform } from "$lib/network/prims";
+  import type { MouseState } from "$lib/util/mouseState";
 
   let surfaceCanvas: OffscreenCanvas;
   let backgroundCanvas: OffscreenCanvas;
@@ -39,8 +40,13 @@
     });
   });
 
-  let firstPos = { x: -1, y: -1 };
-  let previousPos = { x: -1, y: -1 };
+  let mouseState: MouseState = {
+    position: {x: -1, y: -1},
+    firstPos: { x: -1, y: -1 },
+    previousPos: { x: -1, y: -1 },
+    drawing: false,
+  };
+
   let currentTool: Tool = $state(tools[0]);
 
   function handleOperation(operation: Operation) {
@@ -51,17 +57,12 @@
     });
   }
 
-  let drawing = false;
   function draw(event: MouseEvent) {
-    const position = clientToSurfaceCoords({x: event.clientX, y: event.clientY});
-    if (position.x == previousPos.x && position.y == previousPos.y) return;
-    previousPos = position;
-
     // todo: replace with actual variable that controls colour
     let color: Color = "cornflowerblue";
 
     if (currentTool.generateOperation != undefined) {
-      handleOperation(currentTool.generateOperation(firstPos, position, color));
+      handleOperation(currentTool.generateOperation(mouseState, color));
     }
     if (currentTool.clientOperation != undefined) {
       currentTool.clientOperation();
@@ -129,27 +130,31 @@
 
   function mouseDown(event: MouseEvent) {
     if ((event.buttons & 1) != 1) return;
-    drawing = true;
 
-    firstPos = clientToSurfaceCoords({x: event.clientX, y: event.clientY});
+    mouseState.drawing = true;
+    mouseState.firstPos = clientToSurfaceCoords({x: event.clientX, y: event.clientY});
+
     if (currentTool.applicationType == "click_drag" || currentTool.applicationType == "single_click") {
       draw(event);
     }
   }
 
   function mouseUp(event: MouseEvent) {
-    if (drawing && currentTool.applicationType == "click_release") {
+    if (mouseState.drawing && currentTool.applicationType == "click_release") {
       draw(event);
     }
 
-    drawing = false;
-    firstPos = { x: -1, y: -1 };
-    previousPos = { x: -1, y: -1 };
+    mouseState.drawing = false;
   }
 
   function mouseMove(event: MouseEvent) {
-    if ((event.buttons & 1) == 1 && currentTool.applicationType == "click_drag" && drawing ) {
-      draw(event);
+    mouseState.position = clientToSurfaceCoords({x: event.clientX, y: event.clientY});
+    mouseState.previousPos = clientToSurfaceCoords({x: event.clientX-event.movementX, y: event.clientY-event.movementY});
+
+    if ((event.buttons & 1) == 1 && currentTool.applicationType == "click_drag" && mouseState.drawing ) {
+      if (mouseState.position.x != mouseState.previousPos.x || mouseState.position.y != mouseState.previousPos.y) {
+        draw(event);
+      }
     } else if ((event.buttons & 4) == 4 || (event.buttons & 1) == 1 && currentTool.applicationType == "pan") {
       const rect = displayCanvas.getClientRects()[0];
       // Mouse movement transformed to be relative to displayCanvas size
@@ -175,7 +180,6 @@
 <div class="background">
     <img src = {background} alt = "whoops"/>
 </div>
-
 <div class = "drawingSpace">
   <div class = "overlay">
     <div class = "flex justify-center content-center h-full w-full">

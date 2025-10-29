@@ -1,3 +1,4 @@
+import type { MouseState } from "$lib/util/mouseState";
 import type { Operation } from "../network/operation";
 import type { Color, Vec2 } from "../network/prims";
 
@@ -10,7 +11,7 @@ export type Tool = {
     settings: ToolSettings,
     applicableSettings: Set<keyof ToolSettings>
     applicationType: "single_click" | "click_drag" | "click_release" | "pan",
-    generateOperation?(startPosition: Vec2, endPosition: Vec2, color: Color): Operation,
+    generateOperation?(mouseState: MouseState, color: Color): Operation,
     clientOperation?(): void,
 };
 
@@ -24,9 +25,9 @@ export const tools: Array<Tool>= [
         settings: {... defaultToolSettings},
         applicableSettings: new Set(["brushSize"]),
         applicationType: "click_drag",
-        generateOperation(startPosition: Vec2, endPosition: Vec2, color: Color) {
+        generateOperation(mouseState: MouseState, color: Color) {
             let settings = this.settings
-            return {settings, position: endPosition, color, type: "pencil"}
+            return {settings, position: mouseState.position, color, type: "pencil"}
         }
     },
     {
@@ -34,9 +35,9 @@ export const tools: Array<Tool>= [
         settings: {... defaultToolSettings},
         applicableSettings: new Set(["brushSize"]),
         applicationType: "click_drag",
-        generateOperation(startPosition: Vec2, endPosition: Vec2, color: Color) {
+        generateOperation(mouseState: MouseState, color: Color) {
             let settings = this.settings
-            return {settings, position: endPosition, type: "eraser"}
+            return {settings, position: mouseState.position, type: "eraser"}
         }
     },
     {
@@ -44,9 +45,9 @@ export const tools: Array<Tool>= [
         settings: {... defaultToolSettings},
         applicableSettings: new Set(),
         applicationType: "click_release",
-        generateOperation(startPosition: Vec2, endPosition: Vec2, color: Color) {
+        generateOperation(mouseState: MouseState, color: Color) {
             let settings = this.settings
-            return {settings, position: startPosition, position2: endPosition, color: color, type: "rect"}
+            return {settings, position: mouseState.firstPos, position2: mouseState.position, color: color, type: "rect"}
         }
     },
     {
