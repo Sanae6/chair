@@ -12,6 +12,7 @@
 
   let surfaceCanvas: OffscreenCanvas;
   let backgroundCanvas: OffscreenCanvas;
+  let toolPreviewCanvas: OffscreenCanvas;
   let displayCanvas: HTMLCanvasElement;
   let connection: Connection;
   let surface: Surface;
@@ -28,6 +29,7 @@
 
     connection = await Connection.connect(data.username, data.room);
     surfaceCanvas = new OffscreenCanvas(32, 32);
+    toolPreviewCanvas = new OffscreenCanvas(32, 32);
     backgroundCanvas = new OffscreenCanvas(32, 32);
     surface = new Surface({ x: 32, y: 32 }, surfaceCanvas.getContext("2d")!);
     surface.clear();
@@ -64,9 +66,6 @@
     if (currentTool.generateOperation != undefined) {
       handleOperation(currentTool.generateOperation(mouseState, color));
     }
-    if (currentTool.clientOperation != undefined) {
-      currentTool.clientOperation();
-    }
   }
 
   function refreshDisplayCanvas() {
@@ -79,6 +78,7 @@
     displayCtx.setTransform(displayTransform2D);
     displayCtx.drawImage(backgroundCanvas, 0, 0);
     displayCtx.drawImage(surfaceCanvas, 0, 0);
+    displayCtx.drawImage(toolPreviewCanvas, 0, 0);
     // Draws terrible looking gridlines between pixels for debugging
     // for(let i = 0; i < 32; i++) {
     //   displayCtx.lineWidth = 1/displayScale;
@@ -108,6 +108,29 @@
         backgroundCtx.fillStyle = (x+y)%2==0 ? color1 : color2;
         backgroundCtx.fillRect(x*gridTileWidth, y*gridTileWidth, gridTileWidth, gridTileWidth);
       }
+    }
+  }
+
+  function clearToolPreview() {
+    let toolPreviewCtxOptional: OffscreenCanvasRenderingContext2D | null = toolPreviewCanvas.getContext("2d");
+    if (toolPreviewCtxOptional == null) return;
+    let toolPreviewCtx: OffscreenCanvasRenderingContext2D = toolPreviewCtxOptional;
+
+    toolPreviewCtx.clearRect(0, 0, 32, 32);
+    refreshDisplayCanvas();
+  }
+
+  function refreshToolPreviewCanvas() {
+    if (currentTool.drawPreview != undefined) {
+      let toolPreviewCtxOptional: OffscreenCanvasRenderingContext2D | null = toolPreviewCanvas.getContext("2d");
+      if (toolPreviewCtxOptional == null) return;
+      let toolPreviewCtx: OffscreenCanvasRenderingContext2D = toolPreviewCtxOptional;
+      
+      // todo: replace with actual variable that controls colour
+      let color: Color = "cornflowerblue";
+      toolPreviewCtx.clearRect(0, 0, 32, 32);
+      currentTool.drawPreview(toolPreviewCtx, mouseState, color);
+      refreshDisplayCanvas();
     }
   }
 
@@ -151,6 +174,8 @@
     mouseState.position = clientToSurfaceCoords({x: event.clientX, y: event.clientY});
     mouseState.previousPos = clientToSurfaceCoords({x: event.clientX-event.movementX, y: event.clientY-event.movementY});
 
+    refreshToolPreviewCanvas();
+
     if ((event.buttons & 1) == 1 && currentTool.applicationType == "click_drag" && mouseState.drawing ) {
       if (mouseState.position.x != mouseState.previousPos.x || mouseState.position.y != mouseState.previousPos.y) {
         draw(event);
@@ -163,6 +188,11 @@
       displayTransform2D = composeTransforms(transformFromTranslation(movement.x, movement.y), displayTransform2D);
       refreshDisplayCanvas();
     };
+  }
+
+  function mouseLeave(event: MouseEvent) {
+    mouseState.drawing = false;
+    clearToolPreview();
   }
 
   function wheel(event: WheelEvent) {
@@ -190,6 +220,7 @@
         onmousedown={mouseDown}
         onmouseup={mouseUp}
         onmousemove={mouseMove}
+        onmouseleave={mouseLeave}
         onwheel={wheel}
         oncontextmenu={(e) => {e.preventDefault()}}
       ></canvas>
