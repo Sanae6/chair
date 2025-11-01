@@ -1,18 +1,16 @@
-import type { Packet } from "$lib/network/packets";
+import type { ConnectedPacket, Packet } from "$lib/network/packets";
 
 export class Connection {
   // connection factory
-  static async connect(user: string, room: string): Promise<Connection> {
+  static async connect(user: string, room: string): Promise<[Connection, ConnectedPacket]> {
     const connection = new Connection(new WebSocket("/"), user, room);
     console.log("opening")
-    connection.waitOpen();
+    const packet = await connection.waitOpen();
     console.log("open")
-    return connection;
+    return [connection, packet];
   }
 
   private handlers: Map<string, (packet: any) => void> = new Map;
-  private isConnected: boolean = false;
-  private onConnected: (() => void) | undefined;
 
   constructor(private socket: WebSocket, username: string, room: string) {
     socket.binaryType = "arraybuffer";
@@ -21,12 +19,17 @@ export class Connection {
         type: "connect",
         room,
         name: username,
-      })
+      });
+
     });
 
     socket.addEventListener("message", (event) => {
       this.handleMessage(JSON.parse(event.data));
-    })
+    });
+
+    socket.addEventListener("close", () => {
+      this.handlers.get("close")?.({});
+    });
 
     if (import.meta.hot) {
       const close = () => {
@@ -41,22 +44,20 @@ export class Connection {
     this.socket.send(JSON.stringify(message));
   }
 
-  public setHandler<T extends Packet["type"], P extends Packet & { type: T }>(type: T | never, handler: (packet: P) => void) {
+  public setHandler<T extends Packet["type"], P extends Packet & { type: T }>(type: T | "close" | never, handler: (packet: P) => void) {
     this.handlers.set(type, handler);
   }
 
   private handleMessage(message: Packet) {
-    this.isConnected = true;
-    if (this.onConnected) this.onConnected();
-    this.onConnected = undefined;
+    console.log("got a packet", message);
 
     const handler = this.handlers.get(message.type);
     if (handler) handler(message);
   }
 
-  private async waitOpen() {
-    if (this.isConnected) return true;
-
-    await new Promise(res => this.onConnected = res as any);
+  private async waitOpen(): Promise<ConnectedPacket> {
+    return await new Promise(res =>
+      this.setHandler("connected", (packet) => res(packet))
+    );
   }
 }

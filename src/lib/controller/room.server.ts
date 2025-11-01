@@ -4,7 +4,7 @@ import { Surface } from "../model/surface";
 import { cachedWritable, subscribe, type CachedWritable } from "$lib/util/stores";
 import type { User } from "../model/user.server";
 import type { Operation } from "$lib/network/operation";
-import type { OperationPacket, Packet } from "$lib/network/packets";
+import type { ModeratorPacket, OperationPacket, Packet } from "$lib/network/packets";
 
 export type UserOperation = {
   username: string,
@@ -15,9 +15,12 @@ export class Room {
   private canvas: Canvas;
   private surface: CachedWritable<Surface>;
   private changes: CachedWritable<UserOperation[]> = cachedWritable([]);
+  public moderatorPassword: string = Date.now().toString(); // good enough lol
   public users: CachedWritable<Map<string, User>> = cachedWritable(new Map);
+  public moderators: CachedWritable<Set<string>> = cachedWritable(new Set);
 
-  constructor(private id: string, size: Vec2) {
+  constructor(public id: string, public size: Vec2, creator: string) {
+    this.moderators.update(mods => mods.add(creator));
     // todo: add the ability to load from filesystem
     this.canvas = new Canvas(size.x, size.y);
     this.surface = cachedWritable(new Surface(size, this.canvas.getContext("2d")));
@@ -41,6 +44,15 @@ export class Room {
         return surface;
       })
     });
+
+    subscribe([this.moderators, this.users], ([moderators, users]) => {
+      this.broadcast({
+        type: "userList",
+        users: users.keys()
+          .map(username => ({ username, moderator: moderators.has(username) }))
+          .toArray()
+      })
+    })
   }
 
   public broadcast(packet: Packet, fromUser?: string) {
@@ -55,5 +67,36 @@ export class Room {
       changes.push({ username: user.name, operation: packet.operation });
       return changes;
     })
+  }
+
+  public handleModerator(packet: ModeratorPacket, user: User) {
+    console.log("piss", packet);
+    if (packet.password !== this.moderatorPassword)
+      return;
+
+    switch (packet.data.type) {
+      case "promote": {
+        this.promoteUser(packet.data.username);
+        break;
+      }
+      case "kick": {
+        this.kickUser(packet.data.username);
+        break;
+      }
+    }
+  }
+
+
+  public promoteUser(newModerator: string) {
+    this.moderators.value.add(newModerator);
+    this.users.value.get(newModerator)?.send({
+      type: "promoted",
+      password: this.moderatorPassword,
+    })
+  }
+
+  public kickUser(username: string) {
+    console.log("kicking user", username)
+    this.users.value.get(username)?.kick();
   }
 }

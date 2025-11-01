@@ -3,6 +3,9 @@
 import { derived, writable, type Readable, type Unsubscriber, type Writable } from "svelte/store";
 
 export function localStore<T extends { toString(): string }>(key: string, value: T, load?: (value: string) => T): CachedWritable<T> & { default: T } {
+  // ssr handling
+  if (!("localStorage" in globalThis)) return Object.assign(cachedWritable(value), { default: value });
+  
   const input = localStorage.getItem(key);
   const store: CachedWritable<T> & { default: T } = Object.assign(cachedWritable(input !== null ? load?.(input) ?? input as unknown as T : value), { default: value });
   store.subscribe(value => localStorage.setItem(key, value.toString()));

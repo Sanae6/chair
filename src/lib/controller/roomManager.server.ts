@@ -9,14 +9,15 @@ export class RoomManager {
   private rooms: Map<string, Room> = new Map;
 
   constructor() {
-    this.rooms.set("testRoom", new Room("testRoom", { x: 32, y: 32 }));
+    // this.rooms.set("test", new Room("test", { x: 32, y: 32 }, "ourbie"));
   }
 
   // todo: create room id and return that instead
-  public createRoom(roomName: string, size: Vec2): string | undefined {
+  public createRoom(roomName: string, size: Vec2, roomCreator: string): { roomId: string, moderatorPassword: string } | undefined {
     if (this.rooms.has(roomName)) return undefined;
-    this.rooms.set(roomName, new Room(roomName, size));
-    return roomName;
+    const room = new Room(roomName, size, roomCreator);
+    this.rooms.set(roomName, room);
+    return { roomId: room.id, moderatorPassword: room.moderatorPassword };
   }
 
   public getRoom(roomName: string): Room | undefined {

@@ -8,10 +8,21 @@ export class User {
     public room: Room,
     private socket: WebSocket
   ) {
+    console.log("user ctor");
+    this.send({
+      type: "connected",
+      size: room.size
+    });
+
     room.users.update(users => {
       users.set(name, this);
-      return users;   
-    })
+      return users;
+    });
+  }
+
+  public kick() {
+    this.send({ type: "kicked" })
+    this.socket.close(1000)
   }
 
   public send(packet: Packet) {

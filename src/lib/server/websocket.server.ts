@@ -55,15 +55,25 @@ export class Server {
       console.log('for user', user.name, packet);
       console.log();
       switch (packet.type) {
-        case "operation": {
+        case "operation":
           user.room.handleOperation(packet, user);
           break;
-        }
+        case "moderator":
+          user.room.handleModerator(packet, user);
+          break;
       }
     });
 
     socket.on("close", (code, reason) => {
       console.log("closed", code, reason.toString("utf-8"));
+      
+      if (user == undefined) return;
+      user.room.users.update((users) => {
+        if (users.get(user!.name) == user)
+          users.delete(user!.name);
+
+        return users;
+      })
     });
   }
 
