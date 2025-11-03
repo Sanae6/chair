@@ -17,7 +17,7 @@
   import { applyInverseTransform } from "$lib/network/prims";
   import type { MouseState } from "$lib/util/mouseState";
   import { localStore } from "$lib/util/stores";
-    import { goto } from "$app/navigation";
+  import { goto } from "$app/navigation";
 
   let surfaceCanvas: OffscreenCanvas;
   let backgroundCanvas: OffscreenCanvas;
@@ -27,7 +27,7 @@
   let surface: Surface;
   let canvasSize: Vec2;
 
-  let displayTransform2D: Transform2D = transformFromScaling(16, 16);
+  let displayTransform2D: Transform2D;
 
   let { data }: PageProps = $props();
 
@@ -47,6 +47,14 @@
     );
     connection = newConnection;
     canvasSize = connectedPacket.size;
+    if (canvasSize.x > canvasSize.y) { // This condition needs to be changed if the display canvas isn't square
+      displayTransform2D = transformFromScaling(512/canvasSize.x, 512/canvasSize.x);
+      // Offset to center canvas
+      displayTransform2D = composeTransforms(displayTransform2D, transformFromTranslation(0, (canvasSize.x-canvasSize.y)/2));
+    } else {
+      displayTransform2D = transformFromScaling(512/canvasSize.y, 512/canvasSize.y);
+      displayTransform2D = composeTransforms(displayTransform2D, transformFromTranslation((canvasSize.y-canvasSize.x)/2, 0));
+    }
     console.log(canvasSize);
     surfaceCanvas = new OffscreenCanvas(canvasSize.x, canvasSize.y);
     toolPreviewCanvas = new OffscreenCanvas(canvasSize.x, canvasSize.y);
@@ -118,16 +126,18 @@
     displayCtx.drawImage(backgroundCanvas, 0, 0);
     displayCtx.drawImage(surfaceCanvas, 0, 0);
     displayCtx.drawImage(toolPreviewCanvas, 0, 0);
-    // Draws terrible looking gridlines between pixels for debugging
-    // for(let i = 0; i < 32; i++) {
-    //   displayCtx.lineWidth = 1/displayScale;
+    // Draws somewhat terrible looking gridlines between pixels for debugging
+    // displayCtx.lineWidth = 0.2;
+    // for(let i = 0; i < canvasSize.x; i++) {
     //   displayCtx.beginPath();
     //   displayCtx.moveTo(i, 0);
-    //   displayCtx.lineTo(i, 32);
+    //   displayCtx.lineTo(i, canvasSize.y);
     //   displayCtx.stroke();
+    // }
+    // for(let i = 0; i < canvasSize.y; i++) {
     //   displayCtx.beginPath();
     //   displayCtx.moveTo(0, i);
-    //   displayCtx.lineTo(32, i);
+    //   displayCtx.lineTo(canvasSize.x, i);
     //   displayCtx.stroke();
     // }
     displayCtx.restore();
@@ -144,8 +154,8 @@
     const color1: Color = "#777777";
     const color2: Color = "#bbbbbb";
     const gridTileWidth: number = 4;
-    for (let y = 0; y < Math.floor(canvasSize.x / gridTileWidth); y++) {
-      for (let x = 0; x < Math.floor(canvasSize.y / gridTileWidth); x++) {
+    for (let y = 0; y < Math.ceil(canvasSize.y / gridTileWidth); y++) {
+      for (let x = 0; x < Math.ceil(canvasSize.x / gridTileWidth); x++) {
         backgroundCtx.fillStyle = (x + y) % 2 == 0 ? color1 : color2;
         backgroundCtx.fillRect(
           x * gridTileWidth,
