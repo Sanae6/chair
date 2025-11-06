@@ -8,6 +8,7 @@ export type Operation = { // Required fields for all operations
   type: "eraser",
 } | {
   type: "pencil",
+  previousPosition?: Vec2,
   color: Color,
 } | {
   type: "rect",

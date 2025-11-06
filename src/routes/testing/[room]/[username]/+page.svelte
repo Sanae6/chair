@@ -93,6 +93,7 @@
     firstPos: { x: -1, y: -1 },
     previousPos: { x: -1, y: -1 },
     drawing: false,
+    previouslyDrawing: false
   };
 
   let currentTool: Tool = $state(tools[0]);
@@ -217,6 +218,7 @@
   function mouseDown(event: MouseEvent) {
     if ((event.buttons & 1) != 1) return;
 
+    mouseState.previouslyDrawing = mouseState.drawing;
     mouseState.drawing = true;
     mouseState.firstPos = clientToSurfaceCoords({
       x: event.clientX,
@@ -236,6 +238,7 @@
       draw(event);
     }
 
+    mouseState.previouslyDrawing = mouseState.drawing;
     mouseState.drawing = false;
   }
 
@@ -250,6 +253,8 @@
     });
 
     refreshToolPreviewCanvas();
+
+    mouseState.previouslyDrawing = mouseState.drawing;
 
     if (
       (event.buttons & 1) == 1 &&
@@ -282,6 +287,7 @@
   }
 
   function mouseLeave(event: MouseEvent) {
+    mouseState.previouslyDrawing = false;
     mouseState.drawing = false;
     clearToolPreview();
   }

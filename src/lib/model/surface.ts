@@ -1,5 +1,6 @@
 import type { Operation } from "$lib/network/operation";
 import type { Vec2 } from "$lib/network/prims";
+import { drawLine, drawPoint } from "$lib/util/canvasDrawHelpers";
 import { type CanvasRenderingContext2D as SkiaCanvasRenderingContext2D, Image as SkiaImage } from "skia-canvas";
 
 const IS_BROWSER = "window" in globalThis;
@@ -32,13 +33,11 @@ export class Surface {
     switch (operation.type) {
       case "pencil": {
         this.context.fillStyle = operation.color;
-        const offset = Math.floor(operation.settings.brushSize / 2);
-        this.context.fillRect(
-          operation.position.x - offset,
-          operation.position.y - offset,
-          operation.settings.brushSize,
-          operation.settings.brushSize,
-        );
+        if (operation.previousPosition) {
+          drawLine(this.context, operation.previousPosition, operation.position, operation.settings.brushSize, operation.settings.brushShape);
+        } else {
+          drawPoint(this.context, operation.position, operation.settings.brushSize, operation.settings.brushShape);
+        }
       }  break;
       case "eraser": {
         const offset = Math.floor(operation.settings.brushSize / 2);
