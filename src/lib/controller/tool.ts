@@ -2,6 +2,8 @@ import type { MouseState } from "$lib/util/mouseState";
 import type { Operation } from "../network/operation";
 import type { Color, Vec2 } from "../network/prims";
 
+export type BrushShape = "Square" | "Circle";
+
 export type ToolSettings = {
     brushSize: number,
 };
