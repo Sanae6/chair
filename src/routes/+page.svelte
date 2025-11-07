@@ -62,39 +62,45 @@
 
 <div class="overlay">
   <div class="side"></div>
-  <div class="center">
-    <div></div>
-    <div class="title">
-      <img src={Title} alt="Pixel Pals Title" />
+    <div class="center">
+      <div></div>
+      <div class="title">
+        <img src={Title} alt="Pixel Pals Title" />
+      </div>
+      <div class="pixel">
+          <label for="username">Username:</label>
+          <input type="text" id="username" bind:value={$username} />
+      </div>
+      <div class="buttons">
+        <div class="pixel">
+          <label for="roomName">Room name:</label>
+          <input type="text" id="roomName" bind:value={roomName} />
+          <label for="width">Width:</label>
+          <input type="text" id="width" bind:value={$width} />
+          <label for="height">Height:</label>
+          <input type="text" id="height" bind:value={$height} />
+        </div>
+        <button
+          type="button"
+          class="pixelButton"
+          disabled={requesting || $username.length == 0 || roomName.length == 0}
+          onclick={createRoom}
+        >
+          <p>Create Room</p>
+        </button>
+      </div>
+      <div class="buttons">
+        <div class="pixel">
+          <label for="joinCode">Join Code:</label>
+          <input type="text" id="joinCode" bind:value={joinCode} />
+        </div>
+        <button class="pixelButton">
+          <p>Join Room</p>
+        </button>
+      </div>
+      <div id = "error-message" hidden class="pixel"></div>
+      <div></div>
     </div>
-    <!-- temporary trash ui -->
-    <div class="pixelButton buttons">
-      <label for="username">Username: </label>
-      <input type="text" id="username" bind:value={$username} />
-      <label for="roomName">Room name: </label>
-      <input type="text" id="roomName" bind:value={roomName} />
-      <label for="width">Width: </label>
-      <input type="text" id="width" bind:value={$width} />
-      <label for="height">Height: </label>
-      <input type="text" id="height" bind:value={$height} />
-      <label for="joinCode">Join Code: </label>
-      <input type="text" id="joinCode" bind:value={joinCode} />
-    </div>
-    <div class="buttons">
-      <button
-        type="button"
-        class="pixelButton"
-        disabled={requesting || $username.length == 0 || roomName.length == 0}
-        onclick={createRoom}
-      >
-        <p>Create Room</p>
-      </button>
-      <button class="pixelButton">
-        <p>Join Room</p>
-      </button>
-    </div>
-    <div></div>
-  </div>
   <div class="side"></div>
 </div>
 
@@ -127,8 +133,8 @@
   .center {
     height: 100vh;
     display: grid;
-    grid-template-rows: 2fr 1fr 1fr 2fr;
-    gap: 20px;
+    grid-template-rows: 2fr 1fr 1fr 1fr 1fr 1fr 2fr;
+    gap: 5px;
   }
 
   .title {
@@ -212,6 +218,68 @@
   }
 
   .pixelButton {
+    padding: 10px 10px;
+    position: relative;
+    background: linear-gradient(to bottom, #6e6e6e 50%, #404040 50%);
+    width: auto;
+    z-index: 2;
+  }
+
+  .pixel {
+    position: relative;
+    display: flex;
+    white-space: nowrap;
+    gap: 1rem;
+    margin: 10px;
+    place-items: center;
+  }
+
+  .pixel label {
+    font-family: "VT323";
+    text-transform: uppercase;
+    font-size: clamp(1rem, 3vw,2rem);
+    color: rgb(224, 224, 224);
+  }
+
+  .pixel input {
+    font-family: "VT323";
+    text-transform: uppercase;
+    font-size: clamp(0.75rem, 3vw, 1.5rem);
+    color: rgb(224, 224, 224);
+    width:100%;
+    background-color:#2e2e2e;
+    padding: 8px 10px;
+    border-radius: 5px;
+  }
+
+  .pixel::before {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: -10px;
+    right: -10px;
+    background: linear-gradient(to right, #6e6e6e 50%, #404040 50%);
+    z-index: -1;
+  }
+
+  .pixel::after {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: -6px;
+    right: -6px;
+    background: #575757;
+    border-style: solid;
+    border-width: 4px;
+    border-color: #6e6e6e #404040 #404040 #6e6e6e;
+    z-index: -1;
+  }
+
+  .pixel{
     padding: 10px 10px;
     position: relative;
     background: linear-gradient(to bottom, #6e6e6e 50%, #404040 50%);

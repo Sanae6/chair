@@ -3,6 +3,14 @@ import type { MouseState } from "$lib/util/mouseState";
 import type { Operation } from "../network/operation";
 import type { Color, Vec2 } from "../network/prims";
 
+import brush from "$lib/assets/brush.png";
+import circle from "$lib/assets/circ.png";
+import droper from "$lib/assets/droper.png";
+import eraser from "$lib/assets/eraser.png";
+import line from "$lib/assets/line.png";
+import pan from "$lib/assets/pan.png";
+import rectangle from "$lib/assets/rect.png";
+
 export type BrushShape = "Square" | "Circle";
 
 export type ToolSettings = {
@@ -12,6 +20,7 @@ export type ToolSettings = {
 
 export type Tool = {
     displayName: String,
+    imgLink: string,
     settings: ToolSettings,
     applicableSettings: Set<keyof ToolSettings>
     applicationType: "single_click" | "click_drag" | "click_release" | "pan",
@@ -27,6 +36,7 @@ export const defaultToolSettings: ToolSettings = {
 export const tools: Array<Tool>= [
     {
         displayName: "Pencil",
+        imgLink: brush,
         settings: {... defaultToolSettings},
         applicableSettings: new Set(["brushSize", "brushShape"]),
         applicationType: "click_drag",
@@ -45,6 +55,7 @@ export const tools: Array<Tool>= [
     },
     {
         displayName: "Eraser",
+        imgLink: eraser,
         settings: {... defaultToolSettings},
         applicableSettings: new Set(["brushSize", "brushShape"]),
         applicationType: "click_drag",
@@ -55,6 +66,7 @@ export const tools: Array<Tool>= [
     },
     // {
     //     displayName: "Line",
+    //     imgLink: line,
     //     settings: {... defaultToolSettings},
     //     applicableSettings: new Set(["brushSize", "brushShape"]),
     //     applicationType: "click_release",
@@ -74,6 +86,7 @@ export const tools: Array<Tool>= [
     // },
     {
         displayName: "Rect",
+        imgLink:rectangle,
         settings: {... defaultToolSettings},
         applicableSettings: new Set(),
         applicationType: "click_release",
@@ -95,6 +108,7 @@ export const tools: Array<Tool>= [
     },
     // {
     //     displayName: "Ellipse",
+    //     imgLink: circle,
     //     settings: {... defaultToolSettings},
     //     applicableSettings: new Set(),
     //     applicationType: "click_release",
@@ -116,6 +130,7 @@ export const tools: Array<Tool>= [
     // },
     {
         displayName: "Pan",
+        imgLink: pan,
         settings: {... defaultToolSettings},
         applicableSettings: new Set(),
         applicationType: "pan",

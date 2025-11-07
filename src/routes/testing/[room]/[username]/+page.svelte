@@ -14,6 +14,13 @@
   import type { Operation } from "$lib/network/operation";
   import { tools, type Tool } from "$lib/controller/tool";
   import background from "$lib/assets/background.png";
+  import brush from "$lib/assets/brush.png";
+  import circle from "$lib/assets/circ.png";
+  import droper from "$lib/assets/droper.png";
+  import eraser from "$lib/assets/eraser.png";
+  import line from "$lib/assets/line.png";
+  import pan from "$lib/assets/pan.png";
+  import rectangle from "$lib/assets/rect.png";
   import { applyInverseTransform } from "$lib/network/prims";
   import type { MouseState } from "$lib/util/mouseState";
   import { localStore } from "$lib/util/stores";
@@ -354,64 +361,79 @@
 </div>
 <div class="drawingSpace">
   <div class="overlay">
-    <div class="flex justify-center content-around h-full w-full">
-      <div class="flex flex-col p-2">
-        <div>Join code: {data.room}</div>
-        {#each userList as user}
-          <div class="flex flex-row">
-            <button
-              onclick={() => kickUser(user.username)}
-              style:color={showIf(user.username != data.username &&
-                moderatorPassword.value != "")}>🦶</button
-            >
-            <div style:color={showIf(user.moderator)}>👑</div>
-            <div>{user.username}</div>
-          </div>
-        {/each}
-      </div>
-      <canvas
-        bind:this={displayCanvas}
-        width="512"
-        height="512"
-        onmousedown={mouseDown}
-        onmouseup={mouseUp}
-        onmousemove={mouseMove}
-        onmouseleave={mouseLeave}
-        onwheel={wheel}
-        oncontextmenu={(e) => {
-          e.preventDefault();
-        }}
-      ></canvas>
-      <div class="flex flex-col gap-2 p-2">
-        {#each tools as tool}
-          <button onclick={() => (currentTool = tool)} class="pixelButton">
-            <p>{tool.displayName}</p>
-          </button>
-        {/each}
-      </div>
-      <div class="flex flex-col gap-2 p-1">
-        <div>
-          {#if currentTool.applicableSettings.has("brushSize")}
-            <div class="pixel"><p>Brush Size</p></div>
-            <button
-              onclick={() => (currentTool.settings.brushSize += 1)}
-              class="pixelButton"
-            >
-              <p>+</p>
-            </button>
-            <div class="pixel"><p>{currentTool.settings.brushSize}</p></div>
-            <button
-              onclick={() =>
-                (currentTool.settings.brushSize = Math.max(
-                  1,
-                  currentTool.settings.brushSize - 1,
-                ))}
-              class="pixelButton"
-            >
-              <p>-</p>
-            </button>
-          {/if}
+    <div class="flex flex-col p-2">
+      <div class = "pixel"><p>Join code: {data.room}</p></div>
+      {#each userList as user}
+        <div class="flex flex-row">
+          <button
+            onclick={() => kickUser(user.username)}
+            style:color={showIf(user.username != data.username &&
+              moderatorPassword.value != "")}>🦶</button
+          >
+          <div style:color={showIf(user.moderator)}>👑</div>
+          <div class = "pixel"><p>{user.username}</p></div>
         </div>
+      {/each}
+    </div>
+    <canvas
+      bind:this={displayCanvas}
+      width="512"
+      height="512"
+      onmousedown={mouseDown}
+      onmouseup={mouseUp}
+      onmousemove={mouseMove}
+      onmouseleave={mouseLeave}
+      onwheel={wheel}
+      oncontextmenu={(e) => {
+        e.preventDefault();
+      }}
+    ></canvas>
+    <div class="flex flex-col gap-2 p-2">
+      {#each tools as tool}
+        <button onclick={() => (currentTool = tool)} class="pixelButton">
+          <img src = {tool.imgLink} alt = "{tool.displayName} image"/>
+        </button>
+      {/each}
+    </div>
+    <div class="flex flex-col gap-2 p-1">
+      <div>
+        {#if currentTool.applicableSettings.has("brushSize")}
+          <div class="pixel"><p>Size</p>
+          <button
+            onclick={() => (currentTool.settings.brushSize += 1)}
+            class="pixelButton"
+          >
+            <p>+</p>
+          </button>
+          <div class="pixel"><p>{currentTool.settings.brushSize}</p></div>
+          <button
+            onclick={() =>
+              (currentTool.settings.brushSize = Math.max(
+                1,
+                currentTool.settings.brushSize - 1,
+              ))}
+            class="pixelButton"
+          >
+            <p>-</p>
+          </button>
+          </div>
+        {/if}
+        {#if currentTool.applicableSettings.has("brushShape")}
+          <div class="pixel"><p>Shape</p>
+          <button
+            onclick={() => (currentTool.settings.brushShape = "Square")}
+            class="pixelButton"
+          >
+            <img src = {rectangle} alt = "rectangle image"/>
+          </button>
+          <button
+            onclick={() => (currentTool.settings.brushShape = "Circle")}
+            class="pixelButton"
+          >
+            <img src = {circle} alt = "circle image"/>
+          </button>
+          </div>
+        {/if}
       </div>
     </div>
   </div>
@@ -420,7 +442,7 @@
 <style>
   canvas {
     outline: auto 20px cornflowerblue;
-    width: 74.7%;
+    width: 100%;
     height: 100%;
     image-rendering: pixelated;
   }
@@ -441,6 +463,10 @@
 
   .overlay {
     position: relative;
+    display: grid;
+    grid-template-columns: 1fr 9fr 1fr 1fr;
+    grid-template-rows: 100%;
+    gap: 5px;
   }
 
   .drawingSpace::before {
@@ -506,14 +532,14 @@
   .pixelButton {
     position: relative;
     display: grid;
-    margin: 10px;
+    margin: 4px;
     place-items: center;
   }
 
   .pixelButton p {
     font-family: "VT323";
     text-transform: uppercase;
-    font-size: 20px;
+    font-size: 15px;
     color: rgb(224, 224, 224);
   }
 
@@ -599,5 +625,13 @@
     background: linear-gradient(to bottom, #6e6e6e 50%, #404040 50%);
     width: auto;
     z-index: 2;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    object-position: center;
+    image-rendering: pixelated;
   }
 </style>
