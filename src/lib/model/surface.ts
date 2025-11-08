@@ -1,6 +1,6 @@
 import type { Operation } from "$lib/network/operation";
 import type { Vec2 } from "$lib/network/prims";
-import { drawLine, drawPoint } from "$lib/util/canvasDrawHelpers";
+import { drawEmptyRect, drawFilledRect, drawLine, drawPoint } from "$lib/util/canvasDrawHelpers";
 import { type CanvasRenderingContext2D as SkiaCanvasRenderingContext2D, Image as SkiaImage } from "skia-canvas";
 
 const IS_BROWSER = "window" in globalThis;
@@ -50,12 +50,11 @@ export class Surface {
       }  break;
       case "rect": {
         this.context.fillStyle = operation.color;
-        this.context.fillRect(
-          operation.position.x,
-          operation.position.y,
-          operation.position2.x-operation.position.x,
-          operation.position2.y-operation.position.y,
-        );
+        if (operation.settings.isFilled) {
+          drawFilledRect(this.context, operation.position, operation.size);
+        } else {
+          drawEmptyRect(this.context, operation.position, operation.size);
+        }
       }  break;
     }
     this.notifyDraw();

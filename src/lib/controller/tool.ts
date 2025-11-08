@@ -1,4 +1,4 @@
-import { drawPoint } from "$lib/util/canvasDrawHelpers";
+import { drawEmptyRect, drawPoint } from "$lib/util/canvasDrawHelpers";
 import type { MouseState } from "$lib/util/mouseState";
 import type { Operation } from "../network/operation";
 import type { Color, Vec2 } from "../network/prims";
@@ -16,6 +16,7 @@ export type BrushShape = "Square" | "Circle";
 export type ToolSettings = {
     brushSize: number,
     brushShape: BrushShape,
+    isFilled: boolean,
 };
 
 export type Tool = {
@@ -31,6 +32,26 @@ export type Tool = {
 export const defaultToolSettings: ToolSettings = {
     brushSize: 1,
     brushShape: "Square",
+    isFilled: true,
+}
+
+// Helper function for shape tools below
+function pointsToRect(p1: Vec2, p2: Vec2, forceDiagonalSymmetry: boolean, useP1AsCenter: boolean): {pos: Vec2, size: Vec2} {
+    if (forceDiagonalSymmetry) {
+        const width = Math.min(Math.abs(p1.x-p2.x), Math.abs(p1.y-p2.y));
+        p2 = {x: p1.x + width*Math.sign(p2.x-p1.x), y: p1.y + width*Math.sign(p2.y-p1.y)};
+    }
+    if (useP1AsCenter) {
+        p1 = {x: p1.x-(p2.x-p1.x), y: p1.y-(p2.y-p1.y) };
+    }
+    
+    const topLeftCorner = {x: Math.min(p1.x, p2.x), y: Math.min(p1.y, p2.y)};
+    const bottomRightCorner = {x: Math.max(p1.x, p2.x), y: Math.max(p1.y, p2.y)};
+
+    return {
+        pos: topLeftCorner,
+        size: {x: bottomRightCorner.x - topLeftCorner.x+1, y: bottomRightCorner.y - topLeftCorner.y+1},
+    };
 }
 
 export const tools: Array<Tool>= [
@@ -88,18 +109,18 @@ export const tools: Array<Tool>= [
         displayName: "Rect",
         imgLink:rectangle,
         settings: {... defaultToolSettings},
-        applicableSettings: new Set(),
+        applicableSettings: new Set(["isFilled"]),
         applicationType: "click_release",
         generateOperation(mouseState: MouseState, color: Color) {
-            let settings = this.settings
-            return {settings, position: mouseState.firstPos, position2: mouseState.position, color: color, type: "rect"}
+            const rect = pointsToRect(mouseState.firstPos, mouseState.position, mouseState.shiftModifier, mouseState.ctrlModifier);
+            let settings = this.settings;
+            return {settings, position: rect.pos, size: rect.size, color: color, type: "rect"};
         },
         drawPreview(context: OffscreenCanvasRenderingContext2D, mouseState: MouseState, color: Color) {
             context.fillStyle = color;
             if (mouseState.drawing) {
-                const topLeftCorner = {x: Math.min(mouseState.firstPos.x, mouseState.position.x), y: Math.min(mouseState.firstPos.y, mouseState.position.y)}
-                const bottomRightCorner = {x: Math.max(mouseState.firstPos.x, mouseState.position.x), y: Math.max(mouseState.firstPos.y, mouseState.position.y)}
-                //drawEmptyRect(context, topLeftCorner, {x: bottomRightCorner.x - topLeftCorner.x+1, y: bottomRightCorner.y - topLeftCorner.y+1});
+                const rect = pointsToRect(mouseState.firstPos, mouseState.position, mouseState.shiftModifier, mouseState.ctrlModifier);
+                drawEmptyRect(context, rect.pos, rect.size);
             } else {
                 context.fillRect(mouseState.position.x, mouseState.position.y, 1, 1);
             }

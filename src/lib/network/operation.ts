@@ -12,6 +12,6 @@ export type Operation = { // Required fields for all operations
   color: Color,
 } | {
   type: "rect",
-  position2: Vec2,
+  size: Vec2,
   color: Color,
 });

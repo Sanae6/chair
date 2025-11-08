@@ -5,10 +5,14 @@ import type { Vec2 } from "$lib/network/prims";
 // PreviousPos: The mouse position before the most recent movement
 // Drawing: Whether the cursor is drawing currently
 // PreviouslyDrawing: Was the mouse drawing in the last event
+// Ctrl/Alt/Shift Modifier: Whether alt/ctrl/shift is pressed
 export type MouseState = { 
     position: Vec2, 
     firstPos: Vec2, 
     previousPos: Vec2, 
     drawing: boolean,
-    previouslyDrawing: boolean
+    previouslyDrawing: boolean,
+    ctrlModifier: boolean,
+    altModifier: boolean,
+    shiftModifier: boolean,
 }

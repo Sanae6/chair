@@ -100,7 +100,10 @@
     firstPos: { x: -1, y: -1 },
     previousPos: { x: -1, y: -1 },
     drawing: false,
-    previouslyDrawing: false
+    previouslyDrawing: false,
+    ctrlModifier: false,
+    altModifier: false,
+    shiftModifier: false,
   };
 
   let currentTool: Tool = $state(tools[0]);
@@ -231,6 +234,9 @@
       x: event.clientX,
       y: event.clientY,
     });
+    mouseState.ctrlModifier = event.ctrlKey;
+    mouseState.altModifier = event.altKey;
+    mouseState.shiftModifier = event.shiftKey;
 
     if (
       currentTool.applicationType == "click_drag" ||
@@ -247,6 +253,9 @@
 
     mouseState.previouslyDrawing = mouseState.drawing;
     mouseState.drawing = false;
+    mouseState.ctrlModifier = event.ctrlKey;
+    mouseState.altModifier = event.altKey;
+    mouseState.shiftModifier = event.shiftKey;
   }
 
   function mouseMove(event: MouseEvent) {
@@ -258,10 +267,12 @@
       x: event.clientX - event.movementX,
       y: event.clientY - event.movementY,
     });
+    mouseState.previouslyDrawing = mouseState.drawing;
+    mouseState.ctrlModifier = event.ctrlKey;
+    mouseState.altModifier = event.altKey;
+    mouseState.shiftModifier = event.shiftKey;
 
     refreshToolPreviewCanvas();
-
-    mouseState.previouslyDrawing = mouseState.drawing;
 
     if (
       (event.buttons & 1) == 1 &&
@@ -296,6 +307,9 @@
   function mouseLeave(event: MouseEvent) {
     mouseState.previouslyDrawing = false;
     mouseState.drawing = false;
+    mouseState.ctrlModifier = false;
+    mouseState.altModifier = false;
+    mouseState.shiftModifier = false;
     clearToolPreview();
   }
 
@@ -424,15 +438,29 @@
             onclick={() => (currentTool.settings.brushShape = "Square")}
             class="pixelButton"
           >
-            <img src = {rectangle} alt = "rectangle image"/>
+            <img src = {rectangle} alt = "Rectangle"/>
           </button>
           <button
             onclick={() => (currentTool.settings.brushShape = "Circle")}
             class="pixelButton"
           >
-            <img src = {circle} alt = "circle image"/>
+            <img src = {circle} alt = "Circle"/>
           </button>
           </div>
+        {/if}
+        {#if currentTool.applicableSettings.has("isFilled")}
+          <button
+            onclick={() => (currentTool.settings.isFilled = true)}
+            class="pixelButton"
+          >
+            Filled
+          </button>
+          <button
+            onclick={() => (currentTool.settings.isFilled = false)}
+            class="pixelButton"
+          >
+            Empty
+          </button>
         {/if}
       </div>
     </div>
