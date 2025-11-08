@@ -14,4 +14,8 @@ export type Operation = { // Required fields for all operations
   type: "rect",
   size: Vec2,
   color: Color,
+} | {
+  type: "ellipse",
+  size: Vec2,
+  color: Color,
 });

@@ -1,4 +1,4 @@
-import { drawEmptyRect, drawPoint } from "$lib/util/canvasDrawHelpers";
+import { drawEmptyEllipse, drawEmptyRect, drawPoint } from "$lib/util/canvasDrawHelpers";
 import type { MouseState } from "$lib/util/mouseState";
 import type { Operation } from "../network/operation";
 import type { Color, Vec2 } from "../network/prims";
@@ -125,30 +125,28 @@ export const tools: Array<Tool>= [
                 context.fillRect(mouseState.position.x, mouseState.position.y, 1, 1);
             }
         }
-
     },
-    // {
-    //     displayName: "Ellipse",
-    //     imgLink: circle,
-    //     settings: {... defaultToolSettings},
-    //     applicableSettings: new Set(),
-    //     applicationType: "click_release",
-    //     generateOperation(mouseState: MouseState, color: Color) {
-    //         let settings = this.settings
-    //         return {settings, position: mouseState.firstPos, position2: mouseState.position, color: color, type: "rect"}
-    //     },
-    //     drawPreview(context: OffscreenCanvasRenderingContext2D, mouseState: MouseState, color: Color) {
-    //         context.fillStyle = color;
-    //         if (mouseState.drawing) {
-    //             const topLeftCorner = {x: Math.min(mouseState.firstPos.x, mouseState.position.x), y: Math.min(mouseState.firstPos.y, mouseState.position.y)}
-    //             const bottomRightCorner = {x: Math.max(mouseState.firstPos.x, mouseState.position.x), y: Math.max(mouseState.firstPos.y, mouseState.position.y)}
-    //             drawEmptyEllipse(context, topLeftCorner, {x: bottomRightCorner.x - topLeftCorner.x+1, y: bottomRightCorner.y - topLeftCorner.y+1});
-    //         } else {
-    //             context.fillRect(mouseState.position.x, mouseState.position.y, 1, 1);
-    //         }
-    //     }
-
-    // },
+    {
+        displayName: "Ellipse",
+        imgLink: circle,
+        settings: {... defaultToolSettings},
+        applicableSettings: new Set(["isFilled"]),
+        applicationType: "click_release",
+        generateOperation(mouseState: MouseState, color: Color) {
+            const rect = pointsToRect(mouseState.firstPos, mouseState.position, mouseState.shiftModifier, mouseState.ctrlModifier);
+            let settings = this.settings;
+            return {settings, position: rect.pos, size: rect.size, color: color, type: "ellipse"};
+        },
+        drawPreview(context: OffscreenCanvasRenderingContext2D, mouseState: MouseState, color: Color) {
+            context.fillStyle = color;
+            if (mouseState.drawing) {
+                const rect = pointsToRect(mouseState.firstPos, mouseState.position, mouseState.shiftModifier, mouseState.ctrlModifier);
+                drawEmptyEllipse(context, rect.pos, rect.size);
+            } else {
+                context.fillRect(mouseState.position.x, mouseState.position.y, 1, 1);
+            }
+        }
+    },
     {
         displayName: "Pan",
         imgLink: pan,

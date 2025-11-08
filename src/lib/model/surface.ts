@@ -1,6 +1,6 @@
 import type { Operation } from "$lib/network/operation";
 import type { Vec2 } from "$lib/network/prims";
-import { drawEmptyRect, drawFilledRect, drawLine, drawPoint } from "$lib/util/canvasDrawHelpers";
+import { drawEmptyEllipse, drawEmptyRect, drawFilledEllipse, drawFilledRect, drawLine, drawPoint } from "$lib/util/canvasDrawHelpers";
 import { type CanvasRenderingContext2D as SkiaCanvasRenderingContext2D, Image as SkiaImage } from "skia-canvas";
 
 const IS_BROWSER = "window" in globalThis;
@@ -54,6 +54,14 @@ export class Surface {
           drawFilledRect(this.context, operation.position, operation.size);
         } else {
           drawEmptyRect(this.context, operation.position, operation.size);
+        }
+      }  break;
+      case "ellipse": {
+        this.context.fillStyle = operation.color;
+        if (operation.settings.isFilled) {
+          drawFilledEllipse(this.context, operation.position, operation.size);
+        } else {
+          drawEmptyEllipse(this.context, operation.position, operation.size);
         }
       }  break;
     }
