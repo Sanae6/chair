@@ -1,4 +1,4 @@
-import { drawEmptyEllipse, drawEmptyRect, drawPoint } from "$lib/util/canvasDrawHelpers";
+import { drawEmptyEllipse, drawEmptyRect, drawLine, drawPoint } from "$lib/util/canvasDrawHelpers";
 import type { MouseState } from "$lib/util/mouseState";
 import type { Operation } from "../network/operation";
 import type { Color, Vec2 } from "../network/prims";
@@ -85,26 +85,25 @@ export const tools: Array<Tool>= [
             return {settings, position: mouseState.position, type: "eraser"}
         }
     },
-    // {
-    //     displayName: "Line",
-    //     imgLink: line,
-    //     settings: {... defaultToolSettings},
-    //     applicableSettings: new Set(["brushSize", "brushShape"]),
-    //     applicationType: "click_release",
-    //     generateOperation(mouseState: MouseState, color: Color) {
-    //         let settings = this.settings
-    //         return {settings, position: mouseState.firstPos, position2: mouseState.position, color: color, type: "rect"}
-    //     },
-    //     drawPreview(context: OffscreenCanvasRenderingContext2D, mouseState: MouseState, color: Color) {
-    //         context.fillStyle = color;
-    //         if (mouseState.drawing) {
-    //             drawLine(context, mouseState.firstPos, mouseState.position, this.settings.brushSize, this.settings.brushShape);
-    //         } else {
-    //             context.fillRect(mouseState.position.x, mouseState.position.y, 1, 1);
-    //         }
-    //     }
-
-    // },
+    {
+        displayName: "Line",
+        imgLink: line,
+        settings: {... defaultToolSettings},
+        applicableSettings: new Set(["brushSize", "brushShape"]),
+        applicationType: "click_release",
+        generateOperation(mouseState: MouseState, color: Color) {
+            let settings = this.settings;
+            return {settings, position: mouseState.firstPos, position2: mouseState.position, color: color, type: "line"};
+        },
+        drawPreview(context: OffscreenCanvasRenderingContext2D, mouseState: MouseState, color: Color) {
+            context.fillStyle = color;
+            if (mouseState.drawing) {
+                drawLine(context, mouseState.firstPos, mouseState.position, this.settings.brushSize, this.settings.brushShape);
+            } else {
+                drawPoint(context, mouseState.position, this.settings.brushSize, this.settings.brushShape);
+            }
+        }
+    },
     {
         displayName: "Rect",
         imgLink:rectangle,
@@ -122,7 +121,7 @@ export const tools: Array<Tool>= [
                 const rect = pointsToRect(mouseState.firstPos, mouseState.position, mouseState.shiftModifier, mouseState.ctrlModifier);
                 drawEmptyRect(context, rect.pos, rect.size);
             } else {
-                context.fillRect(mouseState.position.x, mouseState.position.y, 1, 1);
+                drawPoint(context, mouseState.position, 1, "Square");
             }
         }
     },
@@ -143,7 +142,7 @@ export const tools: Array<Tool>= [
                 const rect = pointsToRect(mouseState.firstPos, mouseState.position, mouseState.shiftModifier, mouseState.ctrlModifier);
                 drawEmptyEllipse(context, rect.pos, rect.size);
             } else {
-                context.fillRect(mouseState.position.x, mouseState.position.y, 1, 1);
+                drawPoint(context, mouseState.position, 1, "Square");
             }
         }
     },

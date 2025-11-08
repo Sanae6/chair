@@ -64,6 +64,10 @@ export class Surface {
           drawEmptyEllipse(this.context, operation.position, operation.size);
         }
       }  break;
+      case "line": {
+        this.context.fillStyle = operation.color;
+        drawLine(this.context, operation.position, operation.position2, operation.settings.brushSize, operation.settings.brushShape);
+      }  break;
     }
     this.notifyDraw();
   }
