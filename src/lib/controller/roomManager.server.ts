@@ -8,10 +8,6 @@ export class RoomManager {
 
   private rooms: Map<string, Room> = new Map;
 
-  constructor() {
-    // this.rooms.set("test", new Room("test", { x: 32, y: 32 }, "ourbie"));
-  }
-
   // todo: create room id and return that instead
   public createRoom(roomName: string, size: Vec2, roomCreator: string): { roomId: string, moderatorPassword: string } | undefined {
     if (this.rooms.has(roomName)) return undefined;
@@ -25,4 +21,4 @@ export class RoomManager {
   }
 }
 
-export const instance = new RoomManager();
+const instance = new RoomManager;

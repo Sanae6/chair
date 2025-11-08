@@ -76,11 +76,13 @@ export class Room {
 
     switch (packet.data.type) {
       case "promote": {
-        this.promoteUser(packet.data.username);
+        if (user.name !== packet.data.username)
+          this.promoteUser(packet.data.username);
         break;
       }
       case "kick": {
-        this.kickUser(packet.data.username);
+        if (user.name !== packet.data.username)
+          this.kickUser(packet.data.username);
         break;
       }
     }
@@ -96,7 +98,8 @@ export class Room {
   }
 
   public kickUser(username: string) {
-    console.log("kicking user", username)
+    console.log("kicking user", username);
+
     this.users.value.get(username)?.kick();
   }
 }

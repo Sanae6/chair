@@ -11,7 +11,10 @@
   let joinCode = $state("");
 
   let requesting = $state(false);
+  let lastError: string | undefined = $state(undefined);
   async function createRoom() {
+    if (requesting) return false;
+
     requesting = true;
 
     try {
@@ -27,15 +30,16 @@
       const res = await fetch(url, {
         method: "POST",
       });
-      if (res.status !== 201) {
-        console.error("failed...", res.statusText);
-        return;
-      }
       let json = await res.json();
-      const { roomId, moderatorPassword } = json;
-      console.log(json);
-      localStorage.setItem(`${roomId}.password`, moderatorPassword);
-      goto(`/testing/${roomId}/${username.value}`);
+      if (res.status !== 201) {
+        lastError = json.message;
+        alert(json.message);
+      } else {
+        const { roomId, moderatorPassword } = json;
+        console.log(json);
+        localStorage.setItem(`${roomId}.password`, moderatorPassword);
+        goto(`/testing/${roomId}/${username.value}`);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -43,9 +47,24 @@
     requesting = false;
   }
 
-  // function joinRoom() {
-  //   goto(`/testing/${roomId}`)
-  // }
+  async function joinRoom() {
+    if (requesting) return false;
+
+    requesting = true;
+    try {
+      const url = new URL("/api/joinRoom", location.href);
+      url.search = new URLSearchParams({ joinCode }).toString();
+      const res = await fetch(url, { method: "GET" });
+      if (res.status !== 200) {
+        const json = await res.json();
+        lastError = json.message;
+        alert(json.message);
+      } else goto(`/testing/${joinCode}/${username.value}`);
+    } catch (e) {
+      console.error(e);
+    }
+    requesting = false;
+  }
 </script>
 
 <svelte:head>
@@ -62,45 +81,54 @@
 
 <div class="overlay">
   <div class="side"></div>
-    <div class="center">
-      <div></div>
-      <div class="title">
-        <img src={Title} alt="Pixel Pals Title" />
-      </div>
-      <div class="pixel">
-          <label for="username">Username:</label>
-          <input type="text" id="username" bind:value={$username} />
-      </div>
-      <div class="buttons">
-        <div class="pixel">
-          <label for="roomName">Room name:</label>
-          <input type="text" id="roomName" bind:value={roomName} />
-          <label for="width">Width:</label>
-          <input type="text" id="width" bind:value={$width} />
-          <label for="height">Height:</label>
-          <input type="text" id="height" bind:value={$height} />
-        </div>
-        <button
-          type="button"
-          class="pixelButton"
-          disabled={requesting || $username.length == 0 || roomName.length == 0}
-          onclick={createRoom}
-        >
-          <p>Create Room</p>
-        </button>
-      </div>
-      <div class="buttons">
-        <div class="pixel">
-          <label for="joinCode">Join Code:</label>
-          <input type="text" id="joinCode" bind:value={joinCode} />
-        </div>
-        <button class="pixelButton">
-          <p>Join Room</p>
-        </button>
-      </div>
-      <div id = "error-message" hidden class="pixel"></div>
-      <div></div>
+  <div class="center">
+    <div></div>
+    <div class="title">
+      <img src={Title} alt="Pixel Pals Title" />
     </div>
+    <div class="pixel">
+      <label for="username">Username:</label>
+      <input type="text" id="username" bind:value={$username} />
+    </div>
+    <div class="buttons">
+      <div class="pixel">
+        <label for="roomName">Room name:</label>
+        <input type="text" id="roomName" bind:value={roomName} />
+        <label for="width">Width:</label>
+        <input type="text" id="width" bind:value={$width} />
+        <label for="height">Height:</label>
+        <input type="text" id="height" bind:value={$height} />
+      </div>
+      <button
+        type="button"
+        class="pixelButton"
+        disabled={requesting ||
+          $username.length == 0 ||
+          roomName.length == 0 ||
+          $width <= 0 ||
+          $height <= 0}
+        onclick={createRoom}
+      >
+        <p>Create Room</p>
+      </button>
+    </div>
+    <div class="buttons">
+      <div class="pixel">
+        <label for="joinCode">Join Code:</label>
+        <input type="text" id="joinCode" bind:value={joinCode} />
+      </div>
+      <button
+        type="button"
+        class="pixelButton"
+        disabled={requesting || $username.length == 0 || joinCode.length == 0}
+        onclick={joinRoom}
+      >
+        <p>Join Room</p>
+      </button>
+    </div>
+    <div id="error-message" hidden class="pixel">{lastError}</div>
+    <div></div>
+  </div>
   <div class="side"></div>
 </div>
 
@@ -190,6 +218,10 @@
     color: rgb(224, 224, 224);
   }
 
+  .pixelButton:disabled > p {
+    color: rgb(100, 100, 100);
+  }
+
   .pixelButton::before {
     content: "";
     display: block;
@@ -237,7 +269,7 @@
   .pixel label {
     font-family: "VT323";
     text-transform: uppercase;
-    font-size: clamp(1rem, 3vw,2rem);
+    font-size: clamp(1rem, 3vw, 2rem);
     color: rgb(224, 224, 224);
   }
 
@@ -246,8 +278,8 @@
     text-transform: uppercase;
     font-size: clamp(0.75rem, 3vw, 1.5rem);
     color: rgb(224, 224, 224);
-    width:100%;
-    background-color:#2e2e2e;
+    width: 100%;
+    background-color: #2e2e2e;
     padding: 8px 10px;
     border-radius: 5px;
   }
@@ -279,7 +311,7 @@
     z-index: -1;
   }
 
-  .pixel{
+  .pixel {
     padding: 10px 10px;
     position: relative;
     background: linear-gradient(to bottom, #6e6e6e 50%, #404040 50%);
