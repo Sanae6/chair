@@ -1,6 +1,6 @@
 import type { Packet } from "$lib/network/packets";
 import type { WebSocket } from "ws";
-import type { Room } from "../controller/room.server";
+import type { Room } from "./room.server";
 
 export class User {
   constructor(

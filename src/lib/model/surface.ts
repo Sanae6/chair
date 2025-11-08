@@ -31,6 +31,9 @@ export class Surface {
   handleOperation(operation: Operation) {
     console.log("performing", operation.type);
     switch (operation.type) {
+      case "wholeImage": {
+        this.handleSync(operation.url);
+      } break;
       case "pencil": {
         this.context.fillStyle = operation.color;
         if (operation.previousPosition) {
@@ -38,7 +41,7 @@ export class Surface {
         } else {
           drawPoint(this.context, operation.position, operation.settings.brushSize, operation.settings.brushShape);
         }
-      }  break;
+      } break;
       case "eraser": {
         const offset = Math.floor(operation.settings.brushSize / 2);
         this.context.clearRect(
@@ -47,7 +50,7 @@ export class Surface {
           operation.settings.brushSize,
           operation.settings.brushSize,
         );
-      }  break;
+      } break;
       case "rect": {
         this.context.fillStyle = operation.color;
         if (operation.settings.isFilled) {
@@ -55,7 +58,7 @@ export class Surface {
         } else {
           drawEmptyRect(this.context, operation.position, operation.size);
         }
-      }  break;
+      } break;
       case "ellipse": {
         this.context.fillStyle = operation.color;
         if (operation.settings.isFilled) {
@@ -63,11 +66,11 @@ export class Surface {
         } else {
           drawEmptyEllipse(this.context, operation.position, operation.size);
         }
-      }  break;
+      } break;
       case "line": {
         this.context.fillStyle = operation.color;
         drawLine(this.context, operation.position, operation.position2, operation.settings.brushSize, operation.settings.brushShape);
-      }  break;
+      } break;
     }
     this.notifyDraw();
   }

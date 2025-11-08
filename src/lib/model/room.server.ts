@@ -1,8 +1,8 @@
 import type { Vec2 } from "$lib/network/prims";
 import { Canvas } from "skia-canvas";
-import { Surface } from "../model/surface";
+import { Surface } from "./surface";
 import { cachedWritable, subscribe, type CachedWritable } from "$lib/util/stores";
-import type { User } from "../model/user.server";
+import type { User } from "./user.server";
 import type { Operation } from "$lib/network/operation";
 import type { ModeratorPacket, OperationPacket, Packet } from "$lib/network/packets";
 
@@ -42,7 +42,17 @@ export class Room {
           surface.handleOperation(change.operation);
 
         return surface;
-      })
+      });
+
+      if (changes.length >= 50) {
+        this.changes.set([{
+          username: changes.at(-1)!.username,
+          operation: {
+            type: "wholeImage",
+            url: this.canvas.toDataURL("png")
+          }
+        }]);
+      }
     });
 
     subscribe([this.moderators, this.users], ([moderators, users]) => {

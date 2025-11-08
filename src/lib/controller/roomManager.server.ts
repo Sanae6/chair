@@ -1,4 +1,4 @@
-import { Room } from "$lib/controller/room.server";
+import { Room } from "$lib/model/room.server";
 import type { Vec2 } from "$lib/network/prims";
 
 export class RoomManager {
