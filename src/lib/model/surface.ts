@@ -19,13 +19,13 @@ export class Surface {
 
   handleSync(imageDataUrl: string) {
     const image = new (IS_BROWSER ? Image : SkiaImage)();
-    image.src = imageDataUrl;
     image.onload = () => {
       this.clear();
       // @ts-ignore
       this.context.drawImage(image, 0, 0);
       this.notifyDraw();
     };
+    image.src = imageDataUrl;
   }
 
   handleOperation(operation: Operation) {
