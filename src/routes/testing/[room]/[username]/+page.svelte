@@ -26,6 +26,7 @@
   import { localStore } from "$lib/util/stores";
   import { goto } from "$app/navigation";
   import { drawFilledRect } from "$lib/util/canvasDrawHelpers";
+  import ColourPicker from "$lib/components/colourPicker.svelte";
 
   let surfaceCanvas: OffscreenCanvas;
   let backgroundCanvas: OffscreenCanvas;
@@ -108,6 +109,7 @@
   };
 
   let currentTool: Tool = $state(tools[0]);
+  let foregroundColor: Color = $state({r: 100, g: 149, b: 237, a: 255});
 
   function handleOperation(operation: Operation) {
     surface.handleOperation(operation);
@@ -118,11 +120,8 @@
   }
 
   function draw(event: MouseEvent) {
-    // todo: replace with actual variable that controls colour
-    let color: Color = {r: 100, g: 149, b: 237, a: 255};
-
     if (currentTool.generateOperation != undefined) {
-      handleOperation(currentTool.generateOperation(mouseState, color));
+      handleOperation(currentTool.generateOperation(mouseState, foregroundColor));
     }
   }
 
@@ -198,10 +197,8 @@
       let toolPreviewCtx: OffscreenCanvasRenderingContext2D =
         toolPreviewCtxOptional;
 
-      // todo: replace with actual variable that controls colour
-      let color: Color = {r: 100, g: 149, b: 237, a: 255};
       toolPreviewCtx.clearRect(0, 0, canvasSize.x, canvasSize.y);
-      currentTool.drawPreview(toolPreviewCtx, mouseState, color);
+      currentTool.drawPreview(toolPreviewCtx, mouseState, foregroundColor);
       refreshDisplayCanvas();
     }
   }
@@ -389,6 +386,9 @@
           <div class = "pixel"><p>{user.username}</p></div>
         </div>
       {/each}
+      <div class="pixel">
+        <ColourPicker bind:color={foregroundColor}></ColourPicker>
+      </div>
     </div>
     <canvas
       bind:this={displayCanvas}
