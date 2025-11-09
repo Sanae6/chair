@@ -25,6 +25,7 @@
   import type { MouseState } from "$lib/util/mouseState";
   import { localStore } from "$lib/util/stores";
   import { goto } from "$app/navigation";
+  import { drawFilledRect } from "$lib/util/canvasDrawHelpers";
 
   let surfaceCanvas: OffscreenCanvas;
   let backgroundCanvas: OffscreenCanvas;
@@ -118,7 +119,7 @@
 
   function draw(event: MouseEvent) {
     // todo: replace with actual variable that controls colour
-    let color: Color = "cornflowerblue";
+    let color: Color = {r: 100, g: 149, b: 237, a: 255};
 
     if (currentTool.generateOperation != undefined) {
       handleOperation(currentTool.generateOperation(mouseState, color));
@@ -162,17 +163,17 @@
       backgroundCtxOptional;
 
     backgroundCtx.fillRect(0, 0, canvasSize.x, canvasSize.y);
-    const color1: Color = "#777777";
-    const color2: Color = "#bbbbbb";
+    const color1: Color = {r: 120, b: 120, g: 120, a: 255};
+    const color2: Color = {r: 190, b: 190, g: 190, a: 255};
     const gridTileWidth: number = 4;
     for (let y = 0; y < Math.ceil(canvasSize.y / gridTileWidth); y++) {
       for (let x = 0; x < Math.ceil(canvasSize.x / gridTileWidth); x++) {
-        backgroundCtx.fillStyle = (x + y) % 2 == 0 ? color1 : color2;
-        backgroundCtx.fillRect(
-          x * gridTileWidth,
-          y * gridTileWidth,
-          gridTileWidth,
-          gridTileWidth,
+        let color = (x + y) % 2 == 0 ? color1 : color2;
+        drawFilledRect(
+          backgroundCtx,
+          {x: x * gridTileWidth, y: y * gridTileWidth},
+          {x: gridTileWidth, y: gridTileWidth},
+          color,
         );
       }
     }
@@ -198,7 +199,7 @@
         toolPreviewCtxOptional;
 
       // todo: replace with actual variable that controls colour
-      let color: Color = "cornflowerblue";
+      let color: Color = {r: 100, g: 149, b: 237, a: 255};
       toolPreviewCtx.clearRect(0, 0, canvasSize.x, canvasSize.y);
       currentTool.drawPreview(toolPreviewCtx, mouseState, color);
       refreshDisplayCanvas();

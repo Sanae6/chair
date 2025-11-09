@@ -1,7 +1,7 @@
 export type Vec2 = { x: number, y: number };
 
 // for flexibility and ease-of-use reasons, this is not a u32
-export type Color = string;
+export type Color = {r: number, g: number, b: number, a: number};
 
 export type Transform2D = {
     a: number, c: number, e: number,

@@ -70,8 +70,7 @@ export const tools: Array<Tool>= [
             }
         },
         drawPreview(context: OffscreenCanvasRenderingContext2D, mouseState: MouseState, color: Color) {
-            context.fillStyle = color;
-            drawPoint(context, mouseState.position, this.settings.brushSize, this.settings.brushShape);
+            drawPoint(context, mouseState.position, this.settings.brushSize, this.settings.brushShape, color);
         }
     },
     {
@@ -81,8 +80,15 @@ export const tools: Array<Tool>= [
         applicableSettings: new Set(["brushSize", "brushShape"]),
         applicationType: "click_drag",
         generateOperation(mouseState: MouseState, color: Color) {
-            let settings = this.settings
-            return {settings, position: mouseState.position, type: "eraser"}
+            let settings = this.settings;
+            if (mouseState.previouslyDrawing) {
+                return {settings, position: mouseState.position, previousPosition: mouseState.previousPos, color: {r: 0, g: 0, b:0, a: 0}, type: "pencil"};
+            } else {
+                return {settings, position: mouseState.position, color: {r: 0, g: 0, b:0, a: 0}, type: "pencil"};
+            }
+        },
+        drawPreview(context: OffscreenCanvasRenderingContext2D, mouseState: MouseState, color: Color) {
+            drawPoint(context, mouseState.position, this.settings.brushSize, this.settings.brushShape, {r: 72, g: 72, b: 72, a: 100});
         }
     },
     {
@@ -96,11 +102,10 @@ export const tools: Array<Tool>= [
             return {settings, position: mouseState.firstPos, position2: mouseState.position, color: color, type: "line"};
         },
         drawPreview(context: OffscreenCanvasRenderingContext2D, mouseState: MouseState, color: Color) {
-            context.fillStyle = color;
             if (mouseState.drawing) {
-                drawLine(context, mouseState.firstPos, mouseState.position, this.settings.brushSize, this.settings.brushShape);
+                drawLine(context, mouseState.firstPos, mouseState.position, this.settings.brushSize, this.settings.brushShape, color);
             } else {
-                drawPoint(context, mouseState.position, this.settings.brushSize, this.settings.brushShape);
+                drawPoint(context, mouseState.position, this.settings.brushSize, this.settings.brushShape, color);
             }
         }
     },
@@ -116,12 +121,11 @@ export const tools: Array<Tool>= [
             return {settings, position: rect.pos, size: rect.size, color: color, type: "rect"};
         },
         drawPreview(context: OffscreenCanvasRenderingContext2D, mouseState: MouseState, color: Color) {
-            context.fillStyle = color;
             if (mouseState.drawing) {
                 const rect = pointsToRect(mouseState.firstPos, mouseState.position, mouseState.shiftModifier, mouseState.ctrlModifier);
-                drawEmptyRect(context, rect.pos, rect.size);
+                drawEmptyRect(context, rect.pos, rect.size, color);
             } else {
-                drawPoint(context, mouseState.position, 1, "Square");
+                drawPoint(context, mouseState.position, 1, "Square", color);
             }
         }
     },
@@ -137,12 +141,11 @@ export const tools: Array<Tool>= [
             return {settings, position: rect.pos, size: rect.size, color: color, type: "ellipse"};
         },
         drawPreview(context: OffscreenCanvasRenderingContext2D, mouseState: MouseState, color: Color) {
-            context.fillStyle = color;
             if (mouseState.drawing) {
                 const rect = pointsToRect(mouseState.firstPos, mouseState.position, mouseState.shiftModifier, mouseState.ctrlModifier);
-                drawEmptyEllipse(context, rect.pos, rect.size);
+                drawEmptyEllipse(context, rect.pos, rect.size, color);
             } else {
-                drawPoint(context, mouseState.position, 1, "Square");
+                drawPoint(context, mouseState.position, 1, "Square", color);
             }
         }
     },

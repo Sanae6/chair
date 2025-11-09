@@ -12,8 +12,7 @@ export class Surface {
   }
 
   clear() {
-    this.context.fillStyle = "#FFFFFF00";
-    this.context.fillRect(0, 0, this.size.x, this.size.y);
+    this.context.clearRect(0, 0, this.size.x, this.size.y);
     this.notifyDraw();
     console.debug("cleared canvas");
   }
@@ -22,6 +21,7 @@ export class Surface {
     const image = new (IS_BROWSER ? Image : SkiaImage)();
     image.src = imageDataUrl;
     image.onload = () => {
+      this.clear();
       // @ts-ignore
       this.context.drawImage(image, 0, 0);
       this.notifyDraw();
@@ -35,42 +35,29 @@ export class Surface {
         this.handleSync(operation.url);
       } break;
       case "pencil": {
-        this.context.fillStyle = operation.color;
         if (operation.previousPosition) {
-          drawLine(this.context, operation.previousPosition, operation.position, operation.settings.brushSize, operation.settings.brushShape);
+          drawLine(this.context, operation.previousPosition, operation.position, operation.settings.brushSize, operation.settings.brushShape, operation.color);
         } else {
-          drawPoint(this.context, operation.position, operation.settings.brushSize, operation.settings.brushShape);
+          drawPoint(this.context, operation.position, operation.settings.brushSize, operation.settings.brushShape, operation.color);
         }
-      } break;
-      case "eraser": {
-        const offset = Math.floor(operation.settings.brushSize / 2);
-        this.context.clearRect(
-          operation.position.x - offset,
-          operation.position.y - offset,
-          operation.settings.brushSize,
-          operation.settings.brushSize,
-        );
-      } break;
+      }  break;
       case "rect": {
-        this.context.fillStyle = operation.color;
         if (operation.settings.isFilled) {
-          drawFilledRect(this.context, operation.position, operation.size);
+          drawFilledRect(this.context, operation.position, operation.size, operation.color);
         } else {
-          drawEmptyRect(this.context, operation.position, operation.size);
+          drawEmptyRect(this.context, operation.position, operation.size, operation.color);
         }
       } break;
       case "ellipse": {
-        this.context.fillStyle = operation.color;
         if (operation.settings.isFilled) {
-          drawFilledEllipse(this.context, operation.position, operation.size);
+          drawFilledEllipse(this.context, operation.position, operation.size, operation.color);
         } else {
-          drawEmptyEllipse(this.context, operation.position, operation.size);
+          drawEmptyEllipse(this.context, operation.position, operation.size, operation.color);
         }
       } break;
       case "line": {
-        this.context.fillStyle = operation.color;
-        drawLine(this.context, operation.position, operation.position2, operation.settings.brushSize, operation.settings.brushShape);
-      } break;
+        drawLine(this.context, operation.position, operation.position2, operation.settings.brushSize, operation.settings.brushShape, operation.color);
+      }  break;
     }
     this.notifyDraw();
   }
