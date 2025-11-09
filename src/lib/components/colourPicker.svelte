@@ -325,7 +325,7 @@
     gap: 5px;
     white-space: nowrap;
     place-items: center;
-    font-size: clamp(0.75rem, 3vw, 2rem);
+    font-size: 2rem;
     color: rgb(224, 224, 224);
     font-family: "VT323";
     text-transform: uppercase;
