@@ -1,5 +1,5 @@
 import { drawEmptyEllipse, drawEmptyRect, drawLine, drawPoint } from "$lib/util/canvasDrawHelpers";
-import type { MouseState } from "$lib/util/mouseState";
+import type { PointerState } from "$lib/util/pointerState";
 import type { Operation } from "../network/operation";
 import type { Color, Vec2 } from "../network/prims";
 
@@ -25,8 +25,8 @@ export type Tool = {
     settings: ToolSettings,
     applicableSettings: Set<keyof ToolSettings>
     applicationType: "single_click" | "click_drag" | "click_release" | "pan",
-    generateOperation?(mouseState: MouseState, color: Color): Operation,
-    drawPreview?(context: OffscreenCanvasRenderingContext2D, mouseState: MouseState, color: Color): void,
+    generateOperation?(pointerState: PointerState, color: Color): Operation,
+    drawPreview?(context: OffscreenCanvasRenderingContext2D, pointerState: PointerState, color: Color): void,
 };
 
 export const defaultToolSettings: ToolSettings = {
@@ -61,16 +61,16 @@ export const tools: Array<Tool>= [
         settings: {... defaultToolSettings},
         applicableSettings: new Set(["brushSize", "brushShape"]),
         applicationType: "click_drag",
-        generateOperation(mouseState: MouseState, color: Color) {
+        generateOperation(pointerState: PointerState, color: Color) {
             let settings = this.settings;
-            if (mouseState.previouslyDrawing) {
-                return {settings, position: mouseState.position, previousPosition: mouseState.previousPos, color, type: "pencil"};
+            if (pointerState.previouslyDrawing) {
+                return {settings, position: pointerState.position, previousPosition: pointerState.previousPos, color, type: "pencil"};
             } else {
-                return {settings, position: mouseState.position, color, type: "pencil"};
+                return {settings, position: pointerState.position, color, type: "pencil"};
             }
         },
-        drawPreview(context: OffscreenCanvasRenderingContext2D, mouseState: MouseState, color: Color) {
-            drawPoint(context, mouseState.position, this.settings.brushSize, this.settings.brushShape, color);
+        drawPreview(context: OffscreenCanvasRenderingContext2D, pointerState: PointerState, color: Color) {
+            drawPoint(context, pointerState.position, this.settings.brushSize, this.settings.brushShape, color);
         }
     },
     {
@@ -79,16 +79,16 @@ export const tools: Array<Tool>= [
         settings: {... defaultToolSettings},
         applicableSettings: new Set(["brushSize", "brushShape"]),
         applicationType: "click_drag",
-        generateOperation(mouseState: MouseState, color: Color) {
+        generateOperation(pointerState: PointerState, color: Color) {
             let settings = this.settings;
-            if (mouseState.previouslyDrawing) {
-                return {settings, position: mouseState.position, previousPosition: mouseState.previousPos, color: {r: 0, g: 0, b:0, a: 0}, type: "pencil"};
+            if (pointerState.previouslyDrawing) {
+                return {settings, position: pointerState.position, previousPosition: pointerState.previousPos, color: {r: 0, g: 0, b:0, a: 0}, type: "pencil"};
             } else {
-                return {settings, position: mouseState.position, color: {r: 0, g: 0, b:0, a: 0}, type: "pencil"};
+                return {settings, position: pointerState.position, color: {r: 0, g: 0, b:0, a: 0}, type: "pencil"};
             }
         },
-        drawPreview(context: OffscreenCanvasRenderingContext2D, mouseState: MouseState, color: Color) {
-            drawPoint(context, mouseState.position, this.settings.brushSize, this.settings.brushShape, {r: 72, g: 72, b: 72, a: 100});
+        drawPreview(context: OffscreenCanvasRenderingContext2D, pointerState: PointerState, color: Color) {
+            drawPoint(context, pointerState.position, this.settings.brushSize, this.settings.brushShape, {r: 72, g: 72, b: 72, a: 100});
         }
     },
     {
@@ -97,15 +97,15 @@ export const tools: Array<Tool>= [
         settings: {... defaultToolSettings},
         applicableSettings: new Set(["brushSize", "brushShape"]),
         applicationType: "click_release",
-        generateOperation(mouseState: MouseState, color: Color) {
+        generateOperation(pointerState: PointerState, color: Color) {
             let settings = this.settings;
-            return {settings, position: mouseState.firstPos, position2: mouseState.position, color: color, type: "line"};
+            return {settings, position: pointerState.firstPos, position2: pointerState.position, color: color, type: "line"};
         },
-        drawPreview(context: OffscreenCanvasRenderingContext2D, mouseState: MouseState, color: Color) {
-            if (mouseState.drawing) {
-                drawLine(context, mouseState.firstPos, mouseState.position, this.settings.brushSize, this.settings.brushShape, color);
+        drawPreview(context: OffscreenCanvasRenderingContext2D, pointerState: PointerState, color: Color) {
+            if (pointerState.drawing) {
+                drawLine(context, pointerState.firstPos, pointerState.position, this.settings.brushSize, this.settings.brushShape, color);
             } else {
-                drawPoint(context, mouseState.position, this.settings.brushSize, this.settings.brushShape, color);
+                drawPoint(context, pointerState.position, this.settings.brushSize, this.settings.brushShape, color);
             }
         }
     },
@@ -115,17 +115,17 @@ export const tools: Array<Tool>= [
         settings: {... defaultToolSettings},
         applicableSettings: new Set(["isFilled"]),
         applicationType: "click_release",
-        generateOperation(mouseState: MouseState, color: Color) {
-            const rect = pointsToRect(mouseState.firstPos, mouseState.position, mouseState.shiftModifier, mouseState.ctrlModifier);
+        generateOperation(pointerState: PointerState, color: Color) {
+            const rect = pointsToRect(pointerState.firstPos, pointerState.position, pointerState.shiftModifier, pointerState.ctrlModifier);
             let settings = this.settings;
             return {settings, position: rect.pos, size: rect.size, color: color, type: "rect"};
         },
-        drawPreview(context: OffscreenCanvasRenderingContext2D, mouseState: MouseState, color: Color) {
-            if (mouseState.drawing) {
-                const rect = pointsToRect(mouseState.firstPos, mouseState.position, mouseState.shiftModifier, mouseState.ctrlModifier);
+        drawPreview(context: OffscreenCanvasRenderingContext2D, pointerState: PointerState, color: Color) {
+            if (pointerState.drawing) {
+                const rect = pointsToRect(pointerState.firstPos, pointerState.position, pointerState.shiftModifier, pointerState.ctrlModifier);
                 drawEmptyRect(context, rect.pos, rect.size, color);
             } else {
-                drawPoint(context, mouseState.position, 1, "Square", color);
+                drawPoint(context, pointerState.position, 1, "Square", color);
             }
         }
     },
@@ -135,17 +135,17 @@ export const tools: Array<Tool>= [
         settings: {... defaultToolSettings},
         applicableSettings: new Set(["isFilled"]),
         applicationType: "click_release",
-        generateOperation(mouseState: MouseState, color: Color) {
-            const rect = pointsToRect(mouseState.firstPos, mouseState.position, mouseState.shiftModifier, mouseState.ctrlModifier);
+        generateOperation(pointerState: PointerState, color: Color) {
+            const rect = pointsToRect(pointerState.firstPos, pointerState.position, pointerState.shiftModifier, pointerState.ctrlModifier);
             let settings = this.settings;
             return {settings, position: rect.pos, size: rect.size, color: color, type: "ellipse"};
         },
-        drawPreview(context: OffscreenCanvasRenderingContext2D, mouseState: MouseState, color: Color) {
-            if (mouseState.drawing) {
-                const rect = pointsToRect(mouseState.firstPos, mouseState.position, mouseState.shiftModifier, mouseState.ctrlModifier);
+        drawPreview(context: OffscreenCanvasRenderingContext2D, pointerState: PointerState, color: Color) {
+            if (pointerState.drawing) {
+                const rect = pointsToRect(pointerState.firstPos, pointerState.position, pointerState.shiftModifier, pointerState.ctrlModifier);
                 drawEmptyEllipse(context, rect.pos, rect.size, color);
             } else {
-                drawPoint(context, mouseState.position, 1, "Square", color);
+                drawPoint(context, pointerState.position, 1, "Square", color);
             }
         }
     },

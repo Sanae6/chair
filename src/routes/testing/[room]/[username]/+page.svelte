@@ -22,7 +22,7 @@
   import pan from "$lib/assets/pan.png";
   import rectangle from "$lib/assets/rect.png";
   import { applyInverseTransform } from "$lib/network/prims";
-  import type { MouseState } from "$lib/util/mouseState";
+  import type { PointerState } from "$lib/util/pointerState";
   import { localStore } from "$lib/util/stores";
   import { goto } from "$app/navigation";
   import { drawFilledRect } from "$lib/util/canvasDrawHelpers";
@@ -97,12 +97,15 @@
     })
   });
 
-  let mouseState: MouseState = {
+  let pointerState: PointerState = {
     position: { x: -1, y: -1 },
     firstPos: { x: -1, y: -1 },
     previousPos: { x: -1, y: -1 },
     drawing: false,
     previouslyDrawing: false,
+    panning: false,
+    button1: false,
+    button3: false,
     ctrlModifier: false,
     altModifier: false,
     shiftModifier: false,
@@ -119,9 +122,9 @@
     });
   }
 
-  function draw(event: MouseEvent) {
+  function draw() {
     if (currentTool.generateOperation != undefined) {
-      handleOperation(currentTool.generateOperation(mouseState, foregroundColor));
+      handleOperation(currentTool.generateOperation(pointerState, foregroundColor));
     }
   }
 
@@ -198,7 +201,7 @@
         toolPreviewCtxOptional;
 
       toolPreviewCtx.clearRect(0, 0, canvasSize.x, canvasSize.y);
-      currentTool.drawPreview(toolPreviewCtx, mouseState, foregroundColor);
+      currentTool.drawPreview(toolPreviewCtx, pointerState, foregroundColor);
       refreshDisplayCanvas();
     }
   }
@@ -223,72 +226,74 @@
     };
   }
 
-  function mouseDown(event: MouseEvent) {
-    if ((event.buttons & 1) != 1) return;
+  function pointerDown(event: PointerEvent) {
+    displayCanvas.setPointerCapture(event.pointerId);
+    handlePointerEvent(event);
+  }
 
-    mouseState.previouslyDrawing = mouseState.drawing;
-    mouseState.drawing = true;
-    mouseState.firstPos = clientToSurfaceCoords({
+  function pointerUp(event: PointerEvent) {
+    displayCanvas.releasePointerCapture(event.pointerId);
+    handlePointerEvent(event);
+  }
+
+  function pointerLeave(event: PointerEvent) {
+    clearToolPreview();
+  }
+
+  function handlePointerEvent(event: PointerEvent) {
+    // Update properties of pointerState
+    pointerState.previousPos = pointerState.position;
+    pointerState.position = clientToSurfaceCoords({
       x: event.clientX,
       y: event.clientY,
     });
-    mouseState.ctrlModifier = event.ctrlKey;
-    mouseState.altModifier = event.altKey;
-    mouseState.shiftModifier = event.shiftKey;
 
-    if (
-      currentTool.applicationType == "click_drag" ||
-      currentTool.applicationType == "single_click"
-    ) {
-      draw(event);
-    }
-  }
-
-  function mouseUp(event: MouseEvent) {
-    if (mouseState.drawing && currentTool.applicationType == "click_release") {
-      draw(event);
+    let previousButton1 = pointerState.button1;
+    pointerState.button1 = (event.buttons&1)==1;
+    pointerState.previouslyDrawing = pointerState.drawing;
+    if (previousButton1 == false && pointerState.button1 == true && event.type != "pointerenter") {
+      pointerState.firstPos = pointerState.position;
+      pointerState.drawing = true;
+    } else if (previousButton1 == true && pointerState.button1 == false) {
+      pointerState.drawing = false;
     }
 
-    mouseState.previouslyDrawing = mouseState.drawing;
-    mouseState.drawing = false;
-    mouseState.ctrlModifier = event.ctrlKey;
-    mouseState.altModifier = event.altKey;
-    mouseState.shiftModifier = event.shiftKey;
-  }
+    let previousButton3 = pointerState.button3;
+    pointerState.button3 = (event.buttons&4)==4;
+    if (previousButton3 == false && pointerState.button3 == true && event.type != "pointerenter") {
+      pointerState.panning = true;
+    } else if (previousButton3 == true && pointerState.button3 == false) {
+      pointerState.panning = false;
+    }
 
-  function mouseMove(event: MouseEvent) {
-    mouseState.position = clientToSurfaceCoords({
-      x: event.clientX,
-      y: event.clientY,
-    });
-    mouseState.previousPos = clientToSurfaceCoords({
-      x: event.clientX - event.movementX,
-      y: event.clientY - event.movementY,
-    });
-    mouseState.previouslyDrawing = mouseState.drawing;
-    mouseState.ctrlModifier = event.ctrlKey;
-    mouseState.altModifier = event.altKey;
-    mouseState.shiftModifier = event.shiftKey;
 
-    refreshToolPreviewCanvas();
+    pointerState.ctrlModifier = event.ctrlKey;
+    pointerState.altModifier = event.altKey;
+    pointerState.shiftModifier = event.shiftKey;
 
-    if (
-      (event.buttons & 1) == 1 &&
-      currentTool.applicationType == "click_drag" &&
-      mouseState.drawing
-    ) {
-      if (
-        mouseState.position.x != mouseState.previousPos.x ||
-        mouseState.position.y != mouseState.previousPos.y
-      ) {
-        draw(event);
+    // Redraw tool preview
+    const pointerMoved = (pointerState.position.x != pointerState.previousPos.x ||
+                        pointerState.position.y != pointerState.previousPos.y);
+    if (pointerMoved) refreshToolPreviewCanvas();
+
+    // Call draw functions
+    switch (currentTool.applicationType) {
+      case "click_drag": {
+        if (pointerState.drawing && (pointerMoved || !pointerState.previouslyDrawing)) {
+          draw();
+        }
+      } break;
+      case "click_release": {
+        if (!pointerState.drawing && pointerState.previouslyDrawing) {
+          draw();
+        }
       }
-    } else if (
-      (event.buttons & 4) == 4 ||
-      ((event.buttons & 1) == 1 && currentTool.applicationType == "pan")
-    ) {
+    }
+
+    // Pan canvas
+    if (pointerState.panning || pointerState.drawing && currentTool.applicationType == "pan") {
       const rect = displayCanvas.getClientRects()[0];
-      // Mouse movement transformed to be relative to displayCanvas size
+      // Pointer movement transformed to be relative to displayCanvas size
       let movement: Vec2 = {
         x: event.movementX * (displayCanvas.width / rect.width),
         y: event.movementY * (displayCanvas.height / rect.height),
@@ -302,14 +307,6 @@
     }
   }
 
-  function mouseLeave(event: MouseEvent) {
-    mouseState.previouslyDrawing = false;
-    mouseState.drawing = false;
-    mouseState.ctrlModifier = false;
-    mouseState.altModifier = false;
-    mouseState.shiftModifier = false;
-    clearToolPreview();
-  }
 
   function wheel(event: WheelEvent) {
     let mousePos = clientToDisplayCanvasCoords({
@@ -394,10 +391,11 @@
       bind:this={displayCanvas}
       width="512"
       height="512"
-      onmousedown={mouseDown}
-      onmouseup={mouseUp}
-      onmousemove={mouseMove}
-      onmouseleave={mouseLeave}
+      onpointerdown={pointerDown}
+      onpointerup={pointerUp}
+      onpointermove={handlePointerEvent}
+      onpointerenter={handlePointerEvent}
+      onpointerleave={pointerLeave}
       onwheel={wheel}
       oncontextmenu={(e) => {
         e.preventDefault();
