@@ -14,12 +14,7 @@
   import type { Operation } from "$lib/network/operation";
   import { tools, type Tool } from "$lib/controller/tool";
   import background from "$lib/assets/background.png";
-  import brush from "$lib/assets/brush.png";
   import circle from "$lib/assets/circ.png";
-  import droper from "$lib/assets/droper.png";
-  import eraser from "$lib/assets/eraser.png";
-  import line from "$lib/assets/line.png";
-  import pan from "$lib/assets/pan.png";
   import rectangle from "$lib/assets/rect.png";
   import { applyInverseTransform } from "$lib/network/prims";
   import type { PointerState } from "$lib/util/pointerState";
@@ -276,7 +271,7 @@
                         pointerState.position.y != pointerState.previousPos.y);
     if (pointerMoved) refreshToolPreviewCanvas();
 
-    // Call draw functions
+    // Handle tool usage
     switch (currentTool.applicationType) {
       case "click_drag": {
         if (pointerState.drawing && (pointerMoved || !pointerState.previouslyDrawing)) {
@@ -287,7 +282,20 @@
         if (!pointerState.drawing && pointerState.previouslyDrawing) {
           draw();
         }
-      }
+      } break;
+      case "eyedropper": {
+        if (pointerState.drawing) {
+          // @ts-ignore
+          let imageData: ImageData = surfaceCanvas.getContext("2d")?.getImageData(pointerState.position.x, pointerState.position.x, 1, 1);
+          let newColor = {
+            r: imageData.data[0],
+            g: imageData.data[1],
+            b: imageData.data[2],
+            a: imageData.data[3],
+          };
+          if (newColor.a == 255) foregroundColor = newColor;
+        }
+      } break;
     }
 
     // Pan canvas

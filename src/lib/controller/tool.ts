@@ -5,7 +5,7 @@ import type { Color, Vec2 } from "../network/prims";
 
 import brush from "$lib/assets/brush.png";
 import circle from "$lib/assets/circ.png";
-import droper from "$lib/assets/droper.png";
+import dropper from "$lib/assets/dropper.png";
 import eraser from "$lib/assets/eraser.png";
 import line from "$lib/assets/line.png";
 import pan from "$lib/assets/pan.png";
@@ -24,7 +24,7 @@ export type Tool = {
     imgLink: string,
     settings: ToolSettings,
     applicableSettings: Set<keyof ToolSettings>
-    applicationType: "single_click" | "click_drag" | "click_release" | "pan",
+    applicationType: "click_drag" | "click_release" | "pan" | "eyedropper",
     generateOperation?(pointerState: PointerState, color: Color): Operation,
     drawPreview?(context: OffscreenCanvasRenderingContext2D, pointerState: PointerState, color: Color): void,
 };
@@ -148,6 +148,13 @@ export const tools: Array<Tool>= [
                 drawPoint(context, pointerState.position, 1, "Square", color);
             }
         }
+    },
+    {
+        displayName: "Eyedropper",
+        imgLink: dropper,
+        settings: {... defaultToolSettings},
+        applicableSettings: new Set(),
+        applicationType: "eyedropper",
     },
     {
         displayName: "Pan",
