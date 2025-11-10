@@ -363,6 +363,16 @@
   function showIf(condition: boolean): string {
     return condition ? "#ffff" : "#fff0";
   }
+
+  function downloadCanvas() {
+    surfaceCanvas.convertToBlob().then((blob) => {
+      let link = document.createElement('a');
+      link.download = `${data.room}_exported.png`;
+      link.href = window.URL.createObjectURL(blob);
+      link.click();
+      link.remove();
+    });
+  }
 </script>
 
 <svelte:head>
@@ -409,12 +419,15 @@
         e.preventDefault();
       }}
     ></canvas>
-    <div class="flex flex-col gap-2 p-2">
-      {#each tools as tool}
-        <button onclick={() => (currentTool = tool)} class="pixelButton">
-          <img src = {tool.imgLink} alt = "{tool.displayName} image"/>
-        </button>
-      {/each}
+    <div class="flex flex-col justify-between p-2">
+      <div class="flex flex-col gap-2">
+        {#each tools as tool}
+          <button onclick={() => (currentTool = tool)} class="pixelButton">
+            <img src = {tool.imgLink} alt = "{tool.displayName} image"/>
+          </button>
+        {/each}
+      </div>
+      <button class="pixelButton" onclick={downloadCanvas}>DL</button>
     </div>
     <div class="flex flex-col gap-2 p-1">
       <div>
