@@ -286,7 +286,7 @@
       case "eyedropper": {
         if (pointerState.drawing) {
           // @ts-ignore
-          let imageData: ImageData = surfaceCanvas.getContext("2d")?.getImageData(pointerState.position.x, pointerState.position.x, 1, 1);
+          let imageData: ImageData = surfaceCanvas.getContext("2d")?.getImageData(pointerState.position.x, pointerState.position.y, 1, 1);
           let newColor = {
             r: imageData.data[0],
             g: imageData.data[1],
