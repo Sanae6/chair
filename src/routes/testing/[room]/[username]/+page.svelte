@@ -284,6 +284,11 @@
           draw();
         }
       } break;
+      case "single_click": {
+        if (pointerState.drawing && !pointerState.previouslyDrawing) {
+          draw();
+        }
+      } break;
       case "eyedropper": {
         if (pointerState.drawing) {
           // @ts-ignore

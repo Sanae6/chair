@@ -1,6 +1,6 @@
 import type { Operation } from "$lib/network/operation";
 import type { Vec2 } from "$lib/network/prims";
-import { drawEmptyEllipse, drawEmptyRect, drawFilledEllipse, drawFilledRect, drawLine, drawPoint } from "$lib/util/canvasDrawHelpers";
+import { drawEmptyEllipse, drawEmptyRect, drawFilledEllipse, drawFilledRect, drawLine, drawPoint, fill } from "$lib/util/canvasDrawHelpers";
 import { type CanvasRenderingContext2D as SkiaCanvasRenderingContext2D, Image as SkiaImage } from "skia-canvas";
 
 const IS_BROWSER = "window" in globalThis;
@@ -57,6 +57,9 @@ export class Surface {
       } break;
       case "line": {
         drawLine(this.context, operation.position, operation.position2, operation.settings.brushSize, operation.settings.brushShape, operation.color);
+      }  break;
+      case "fill": {
+        fill(this.context, operation.position, operation.color);
       }  break;
     }
     this.notifyDraw();

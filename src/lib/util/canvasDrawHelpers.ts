@@ -6,11 +6,29 @@ import { type CanvasRenderingContext2D as SkiaCanvasRenderingContext2D, ImageDat
 IMAGEDATA HELPER FUNCTIONS
 *************************/
 
+function getPixelColor(imageData: ImageData | SkiaImageData, x: number, y: number): Color {
+    const pixelIndex = 4*(y*imageData.width+x);
+    return {
+        r: imageData.data[pixelIndex],
+        g: imageData.data[pixelIndex+1],
+        b: imageData.data[pixelIndex+2],
+        a: imageData.data[pixelIndex+3],
+    };
+}
+
+function testPixelIsColor(imageData: ImageData | SkiaImageData, x: number, y: number, color: Color): boolean {
+    const pixelIndex = 4*(y*imageData.width+x);
+    return (imageData.data[pixelIndex] == color.r &&
+            imageData.data[pixelIndex+1] == color.g &&
+            imageData.data[pixelIndex+2] == color.b &&
+            imageData.data[pixelIndex+3] == color.a);
+}
+
 function putPixel(imageData: ImageData | SkiaImageData, x: number, y: number, color: Color) {
     const pixelIndex = 4*(y*imageData.width+x);
     imageData.data[pixelIndex] = color.r;
-    imageData.data[pixelIndex+2] = color.b;
     imageData.data[pixelIndex+1] = color.g;
+    imageData.data[pixelIndex+2] = color.b;
     imageData.data[pixelIndex+3] = color.a;
 }
 
@@ -240,4 +258,31 @@ export function drawFilledRect(context: SkiaCanvasRenderingContext2D | CanvasRen
         // @ts-ignore
         context.putImageData(imageData, start.x, start.y);
     }
+}
+
+export function fill(context: SkiaCanvasRenderingContext2D | CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, position: Vec2, color: Color) {
+    let imageData = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
+    let targetColor = getPixelColor(imageData, position.x, position.y);
+    // Colour picker can output fractional values for color, if thats fixed the math.rounds can be removed
+    if (targetColor.r == Math.round(color.r) && targetColor.b == Math.round(color.b) && targetColor.g == Math.round(color.g) && targetColor.a == color.a) return;
+
+    putPixel(imageData, position.x, position.y, color);
+    let points: Array<Vec2> = [position];
+    const directions: Array<Vec2> = [{x:1,y:0}, {x:-1,y:0}, {x:0,y:1}, {x:0,y:-1}];
+
+    while(points.length > 0) {
+        // @ts-ignore
+        let currentPoint: Vec2 = points.pop();
+        for (const direction of directions) {
+            let testPoint = {x: currentPoint.x+direction.x, y: currentPoint.y+direction.y};
+            if (testPoint.x < 0 || testPoint.x >= context.canvas.width || testPoint.y < 0 || testPoint.y >= context.canvas.height) continue;
+            if (testPixelIsColor(imageData, testPoint.x, testPoint.y, targetColor)) {
+                putPixel(imageData, testPoint.x, testPoint.y, color);
+                points.push(testPoint);
+            }
+        }
+    }
+
+    // @ts-ignore
+    context.putImageData(imageData, 0, 0);
 }

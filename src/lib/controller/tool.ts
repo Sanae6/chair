@@ -10,6 +10,7 @@ import eraser from "$lib/assets/eraser.png";
 import line from "$lib/assets/line.png";
 import pan from "$lib/assets/pan.png";
 import rectangle from "$lib/assets/rect.png";
+import fill from "$lib/assets/fill.png";
 
 export type BrushShape = "Square" | "Circle";
 
@@ -24,7 +25,7 @@ export type Tool = {
     imgLink: string,
     settings: ToolSettings,
     applicableSettings: Set<keyof ToolSettings>
-    applicationType: "click_drag" | "click_release" | "pan" | "eyedropper",
+    applicationType: "single_click" | "click_drag" | "click_release" | "pan" | "eyedropper",
     generateOperation?(pointerState: PointerState, color: Color): Operation,
     drawPreview?(context: OffscreenCanvasRenderingContext2D, pointerState: PointerState, color: Color): void,
 };
@@ -147,6 +148,20 @@ export const tools: Array<Tool>= [
             } else {
                 drawPoint(context, pointerState.position, 1, "Square", color);
             }
+        }
+    },
+    {
+        displayName: "Fill",
+        imgLink: fill,
+        settings: {... defaultToolSettings},
+        applicableSettings: new Set(),
+        applicationType: "single_click",
+        generateOperation(pointerState: PointerState, color: Color) {
+            let settings = this.settings;
+            return {settings, position: pointerState.position, color: color, type: "fill"};
+        },
+        drawPreview(context: OffscreenCanvasRenderingContext2D, pointerState: PointerState, color: Color) {
+            if (!pointerState.drawing) drawPoint(context, pointerState.position, 1, "Square", color);
         }
     },
     {

@@ -22,4 +22,9 @@ export type Operation = {
   position: Vec2,
   position2: Vec2,
   color: Color,
+} | {
+  type: "fill",
+  settings: ToolSettings,
+  position: Vec2,
+  color: Color,
 }
