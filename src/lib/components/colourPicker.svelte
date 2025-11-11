@@ -124,7 +124,6 @@
         if (ctxOptional == null) return;
         let ctx: OffscreenCanvasRenderingContext2D = ctxOptional;
 
-        const startTime = performance.now();
         let imageData = ctx.getImageData(0, 0, pickerSquareCanvas.width, pickerSquareCanvas.height);
         for (let y = 0; y < pickerSquareCanvas.height; y++) {
             for (let x = 0; x < pickerSquareCanvas.width; x++) {
@@ -137,10 +136,7 @@
             }
         }
         ctx.putImageData(imageData, 0, 0);
-        const endTime = performance.now();
-        console.log(`Took ${endTime - startTime}ms`)
     }
-
 
     function redrawPickerSquare() {
         // const startTime = performance.now();
@@ -157,7 +153,6 @@
         const bkgImdateDate = bkgCtx.getImageData(0, 0, pickerSquareBkgCanvas.width, pickerSquareBkgCanvas.height);
         ctx.putImageData(bkgImdateDate, 0, 0);
 
-
         // Draw current colour marker
         const x = hsvColor.s*pickerSquareCanvas.width/100;
         const y = pickerSquareCanvas.height - hsvColor.v*pickerSquareCanvas.width/100;
@@ -166,8 +161,6 @@
         ctx.beginPath();
         ctx.rect(x-3, y-3, 6, 6);
         ctx.stroke();
-        // const endTime = performance.now();
-        // console.log(`Took ${endTime - startTime}ms`);
     }
 
     function redrawPickerSlider() {
