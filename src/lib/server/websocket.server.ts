@@ -61,6 +61,9 @@ export class Server {
         case "moderator":
           user.room.handleModerator(packet, user);
           break;
+        case "palette":
+          user.room.handlePalette(packet);
+          break;
       }
     });
 

@@ -9,7 +9,8 @@ export type Packet =
   | SyncPacket
   | ModeratorPacket
   | PromotedPacket
-  | KickedPacket;
+  | KickedPacket
+  | PalettePacket;
 
 export type ConnectPacket = {
   type: "connect",
@@ -56,4 +57,18 @@ export type PromotedPacket = {
 
 export type KickedPacket = {
   type: "kicked"
+}
+
+export type PalettePacket = {
+  type: "palette"
+  data: {
+    type: "add",
+    color: number
+  } | {
+    type: "sync",
+    colors: number[],
+  } | {
+    type: "remove",
+    index: number,
+  }
 }

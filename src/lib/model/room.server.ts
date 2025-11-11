@@ -4,7 +4,7 @@ import { Surface } from "./surface";
 import { cachedWritable, subscribe, type CachedWritable } from "$lib/util/stores";
 import type { User } from "./user.server";
 import type { Operation } from "$lib/network/operation";
-import type { ModeratorPacket, OperationPacket, Packet } from "$lib/network/packets";
+import type { ModeratorPacket, OperationPacket, Packet, PalettePacket } from "$lib/network/packets";
 
 export type UserOperation = {
   username: string,
@@ -15,6 +15,7 @@ export class Room {
   private canvas: Canvas;
   private surface: CachedWritable<Surface>;
   private changes: CachedWritable<UserOperation[]> = cachedWritable([]);
+  public palette: CachedWritable<number[]> = cachedWritable([]);
   public moderatorPassword: string = Date.now().toString(); // good enough lol
   public users: CachedWritable<Map<string, User>> = cachedWritable(new Map);
   public moderators: CachedWritable<Set<string>> = cachedWritable(new Set);
@@ -62,7 +63,17 @@ export class Room {
           .map(username => ({ username, moderator: moderators.has(username) }))
           .toArray()
       })
-    })
+    });
+
+    subscribe([this.palette, this.users], ([palette, _]) => {
+      this.broadcast({
+        type: "palette",
+        data: {
+          type: "sync",
+          colors: palette
+        }
+      });
+    });
   }
 
   public broadcast(packet: Packet, fromUser?: string) {
@@ -97,12 +108,18 @@ export class Room {
     }
   }
 
-
   public promoteUser(newModerator: string) {
-    this.moderators.value.add(newModerator);
-    this.users.value.get(newModerator)?.send({
-      type: "promoted",
-      password: this.moderatorPassword,
+    this.moderators.update(moderator => {
+      moderator.add(newModerator);
+      return moderator;
+    });
+    this.users.update(users => {
+
+      users.get(newModerator)?.send({
+        type: "promoted",
+        password: this.moderatorPassword,
+      });
+      return users;
     })
   }
 
@@ -110,5 +127,26 @@ export class Room {
     console.log("kicking user", username);
 
     this.users.value.get(username)?.kick();
+  }
+
+  public handlePalette(packet: PalettePacket) {
+    switch (packet.data.type) {
+      case "add": {
+        const color = packet.data.color;
+        this.palette.update((palette) => {
+          palette.push(color);
+          return palette
+        })
+      } break;
+      case "remove": {
+        const index = packet.data.index;
+        this.palette.update((palette) => {
+          try { palette.splice(index, 1); } catch (e) {
+            console.error("user sent an invalid palette index", e);
+          }
+          return palette
+        });
+      } break;
+    }
   }
 }
