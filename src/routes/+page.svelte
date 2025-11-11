@@ -86,16 +86,16 @@
       <img src={Title} alt="Pixel Pals Title" />
     </div>
     <div class="pixel">
-      <label for="username">Username:</label>
+      <label for="username">USERNAME:</label>
       <input type="text" id="username" bind:value={$username} maxlength="12"/>
     </div>
     <div class="buttons">
       <div class="pixel">
-        <label for="roomName">Name:</label>
+        <label for="roomName">ROOM NAME:</label>
         <input type="text" id="roomName" bind:value={roomName} />
         <label for="width">W:</label>
         <input type="text" id="width" bind:value={$width} />
-        <label for="height">x H:</label>
+        <label for="height">H:</label>
         <input type="text" id="height" bind:value={$height} />
       </div>
       <button
@@ -108,12 +108,12 @@
           $height <= 0}
         onclick={createRoom}
       >
-        <p>Create Room</p>
+        <p>CREATE ROOM</p>
       </button>
     </div>
     <div class="buttons">
       <div class="pixel">
-        <label for="joinCode">Join Code:</label>
+        <label for="joinCode">JOIN CODE:</label>
         <input type="text" id="joinCode" bind:value={joinCode} />
       </div>
       <button
@@ -122,12 +122,12 @@
         disabled={requesting || $username.length == 0 || joinCode.length == 0}
         onclick={joinRoom}
       >
-        <p>Join Room</p>
+        <p>JOIN ROOM</p>
       </button>
     </div>
     {#if lastError}
     <div id="error-message"  class="pixel">
-        <p>{lastError}</p>
+        <p>{lastError.toUpperCase()}</p>
     </div>
     {/if}
     <div></div>
@@ -191,7 +191,6 @@
     position: relative;
     display: inline-block;
     vertical-align: top;
-    text-transform: uppercase;
 
     cursor: pointer;
 
@@ -216,7 +215,6 @@
 
   .pixelButton p {
     font-family: "VT323";
-    text-transform: uppercase;
     font-size: clamp(2rem, 3vw, 100rem);
     color: rgb(224, 224, 224);
   }
@@ -272,14 +270,12 @@
 
   .pixel label {
     font-family: "VT323";
-    text-transform: uppercase;
     font-size: clamp(1rem, 3vw, 2rem);
     color: rgb(224, 224, 224);
   }
 
   .pixel input {
     font-family: "VT323";
-    text-transform: uppercase;
     font-size: 20px;
     color: rgb(224, 224, 224);
     width: 100%;
@@ -290,7 +286,6 @@
 
   .pixel p {
     font-family: "VT323";
-    text-transform: uppercase;
     font-size: clamp(1rem, 3vw, 2rem);
     color: rgb(255, 123, 0);
     text-align: center;

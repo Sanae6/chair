@@ -226,14 +226,12 @@
 
 
     function pickerSquarePointerDown(event: PointerEvent) {
-        // if ((event.buttons&1)==0) return;
         setColorFromSquarePointerEvent(event);
 
         pickerSquareCanvas.onpointermove = pickerSquarePointerMove;
         pickerSquareCanvas.setPointerCapture(event.pointerId);
     }
     function pickerSquarePointerUp(event: PointerEvent) {
-        // if ((event.buttons&1)==0) return;
         pickerSquareCanvas.onpointermove = null;
         pickerSquareCanvas.releasePointerCapture(event.pointerId);
     }
@@ -243,14 +241,12 @@
 
 
     function pickerSliderPointerDown(event: PointerEvent) {
-        // if ((event.buttons&1)==0) return;
         setColorFromSliderPointerEvent(event);
 
         pickerSliderCanvas.onpointermove = pickerSliderPointerMove;
         pickerSliderCanvas.setPointerCapture(event.pointerId);
     }
     function pickerSliderPointerUp(event: PointerEvent) {
-        // if ((event.buttons&1)==0) return;
         pickerSliderCanvas.onpointermove = null;
         pickerSliderCanvas.releasePointerCapture(event.pointerId);
     }
@@ -376,7 +372,6 @@
     font-size: 2rem;
     color: rgb(224, 224, 224);
     font-family: "VT323";
-    text-transform: uppercase;
     margin: 4px 1px;
   }
 

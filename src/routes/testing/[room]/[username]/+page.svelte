@@ -438,7 +438,7 @@
 <div class="container">
   <div class="drawingSpace">
     <div class="flex flex-col p-2">
-      <div class="pixel"><p>Join code: {data.room}</p></div>
+      <div class="pixel"><p>JOIN CODE: {data.room}</p></div>
       {#each userList as user}
         <div class="flex flex-row">
           <button
@@ -494,7 +494,7 @@
         <div>
           {#if currentTool.applicableSettings.has("brushSize")}
             <div class="pixel">
-              <p>Size</p>
+              <p>SIZE</p>
               <button
                 onclick={() => (currentTool.settings.brushSize += 1)}
                 class="pixelButton"
@@ -516,7 +516,7 @@
           {/if}
           {#if currentTool.applicableSettings.has("brushShape")}
             <div class="pixel">
-              <p>Shape</p>
+              <p>SHAPE</p>
               <label class="pixelButton">
                 <input
                   type="radio"
@@ -539,7 +539,7 @@
           {/if}
           {#if currentTool.applicableSettings.has("isFilled")}
             <div class="pixel">
-              <p>Fills</p>
+              <p>FILLED</p>
               <label class="pixelButton">
                 <input
                   type="radio"
@@ -647,7 +647,6 @@
     position: relative;
     display: inline-block;
     vertical-align: top;
-    text-transform: uppercase;
 
     cursor: pointer;
 
@@ -707,7 +706,6 @@
 
   .pixelButton p {
     font-family: "VT323";
-    text-transform: uppercase;
     font-size: 15px;
     color: rgb(224, 224, 224);
   }
@@ -756,7 +754,6 @@
 
   .pixel p {
     font-family: "VT323";
-    text-transform: uppercase;
     font-size: 20px;
     color: rgb(224, 224, 224);
   }
