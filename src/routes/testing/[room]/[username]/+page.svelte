@@ -435,135 +435,133 @@
 <div class="background">
   <img src={background} alt="whoops" />
 </div>
-<div class="container">
-  <div class="drawingSpace">
+<div class="drawingSpaceContainer">
+  <div class="drawingSpace userListSpace">
+    <div class="pixel"><p>Join code: {data.room}</p></div>
+    {#each userList as user}
+      <div class="flex flex-row">
+        <button
+          onclick={() => kickUser(user.username)}
+          style:color={showIf(
+            user.username != data.username && moderatorPassword.value != "",
+          )}>🦶</button
+        >
+        <div style:color={showIf(user.moderator)}>👑</div>
+        <div class="pixel"><p>{user.username}</p></div>
+      </div>
+    {/each}
+  </div>
+  <div class="drawingSpace canvasSpace">
     <div class="flex flex-col p-2">
-      <div class="pixel"><p>JOIN CODE: {data.room}</p></div>
-      {#each userList as user}
-        <div class="flex flex-row">
-          <button
-            onclick={() => kickUser(user.username)}
-            style:color={showIf(
-              user.username != data.username && moderatorPassword.value != "",
-            )}>🦶</button
-          >
-          <div style:color={showIf(user.moderator)}>👑</div>
-          <div class="pixel"><p>{user.username}</p></div>
-        </div>
-      {/each}
+      <div class="pixel">
+        <ColourPicker bind:color={foregroundColor}></ColourPicker>
+      </div>
+      <div class="pixel grow">
+        <!-- COLOUR PALLETE HERE! (or move this div above the colour picker either way) -->
+      </div>
     </div>
-  </div>
-  <div class="drawingSpace">
-    <div class="overlay">
-      <div class="flex flex-col p-2">
+    <canvas
+      bind:this={displayCanvas}
+      width="512"
+      height="512"
+      onpointerdown={pointerDown}
+      onpointerup={pointerUp}
+      onpointermove={handlePointerEvent}
+      onpointerenter={handlePointerEvent}
+      onpointerleave={pointerLeave}
+      onwheel={wheel}
+      oncontextmenu={(e) => {
+        e.preventDefault();
+      }}
+    ></canvas>
+    <div class="flex flex-col justify-between p-2 pt-3 w-[4vw] min-w-[60px]">
+      <div class="flex flex-col gap-2">
+        {#each stateTrackedTools as tool}
+          <label class="pixelButton">
+            <input
+              type="radio"
+              value={tool}
+              bind:group={currentTool}
+              hidden
+            />
+            <img src={tool.imgLink} alt="{tool.displayName} image" />
+          </label>
+        {/each}
+      </div>
+      <button class="pixelButton" onclick={downloadCanvas}><p>DL</p></button>
+    </div>
+    <div class="flex flex-col gap-2 p-1 w-[5vw] min-w-[100px]">
+      {#if currentTool.applicableSettings.has("brushSize")}
         <div class="pixel">
-          <ColourPicker bind:color={foregroundColor}></ColourPicker>
+          <p>Size</p>
+          <button
+            onclick={() => (currentTool.settings.brushSize += 1)}
+            class="pixelButton"
+          >
+            <p>+</p>
+          </button>
+          <div class="pixel"><p>{currentTool.settings.brushSize}</p></div>
+          <button
+            onclick={() =>
+              (currentTool.settings.brushSize = Math.max(
+                1,
+                currentTool.settings.brushSize - 1,
+              ))}
+            class="pixelButton"
+          >
+            <p>-</p>
+          </button>
         </div>
-      </div>
-      <canvas
-        bind:this={displayCanvas}
-        width="512"
-        height="512"
-        onpointerdown={pointerDown}
-        onpointerup={pointerUp}
-        onpointermove={handlePointerEvent}
-        onpointerenter={handlePointerEvent}
-        onpointerleave={pointerLeave}
-        onwheel={wheel}
-        oncontextmenu={(e) => {
-          e.preventDefault();
-        }}
-      ></canvas>
-      <div class="flex flex-col justify-between p-2">
-        <div class="flex flex-col gap-2">
-          {#each stateTrackedTools as tool}
-            <label class="pixelButton">
-              <input
-                type="radio"
-                value={tool}
-                bind:group={currentTool}
-                hidden
-              />
-              <img src={tool.imgLink} alt="{tool.displayName} image" />
-            </label>
-          {/each}
+      {/if}
+      {#if currentTool.applicableSettings.has("brushShape")}
+        <div class="pixel">
+          <p>Shape</p>
+          <label class="pixelButton">
+            <input
+              type="radio"
+              value={"Square"}
+              bind:group={currentTool.settings.brushShape}
+              hidden
+            />
+            <img src={rectangle} alt="Rectangle" />
+          </label>
+          <label class="pixelButton">
+            <input
+              type="radio"
+              value={"Circle"}
+              bind:group={currentTool.settings.brushShape}
+              hidden
+            />
+            <img src={circle} alt="Circle" />
+          </label>
         </div>
-        <button class="pixelButton" onclick={downloadCanvas}><p>DL</p></button>
-      </div>
-      <div class="flex flex-col gap-2 p-1">
-        <div>
-          {#if currentTool.applicableSettings.has("brushSize")}
-            <div class="pixel">
-              <p>SIZE</p>
-              <button
-                onclick={() => (currentTool.settings.brushSize += 1)}
-                class="pixelButton"
-              >
-                <p>+</p>
-              </button>
-              <div class="pixel"><p>{currentTool.settings.brushSize}</p></div>
-              <button
-                onclick={() =>
-                  (currentTool.settings.brushSize = Math.max(
-                    1,
-                    currentTool.settings.brushSize - 1,
-                  ))}
-                class="pixelButton"
-              >
-                <p>-</p>
-              </button>
-            </div>
-          {/if}
-          {#if currentTool.applicableSettings.has("brushShape")}
-            <div class="pixel">
-              <p>SHAPE</p>
-              <label class="pixelButton">
-                <input
-                  type="radio"
-                  value={"Square"}
-                  bind:group={currentTool.settings.brushShape}
-                  hidden
-                />
-                <img src={rectangle} alt="Rectangle" />
-              </label>
-              <label class="pixelButton">
-                <input
-                  type="radio"
-                  value={"Circle"}
-                  bind:group={currentTool.settings.brushShape}
-                  hidden
-                />
-                <img src={circle} alt="Circle" />
-              </label>
-            </div>
-          {/if}
-          {#if currentTool.applicableSettings.has("isFilled")}
-            <div class="pixel">
-              <p>FILLED</p>
-              <label class="pixelButton">
-                <input
-                  type="radio"
-                  value={true}
-                  bind:group={currentTool.settings.isFilled}
-                  hidden
-                />
-                <img src={box} alt="Box" />
-              </label>
-              <label class="pixelButton">
-                <input
-                  type="radio"
-                  value={false}
-                  bind:group={currentTool.settings.isFilled}
-                  hidden
-                />
-                <img src={rectangle} alt="Rectangle" />
-              </label>
-            </div>
-          {/if}
+      {/if}
+      {#if currentTool.applicableSettings.has("isFilled")}
+        <div class="pixel">
+          <p>Fills</p>
+          <label class="pixelButton">
+            <input
+              type="radio"
+              value={true}
+              bind:group={currentTool.settings.isFilled}
+              hidden
+            />
+            <img src={box} alt="Box" />
+          </label>
+          <label class="pixelButton">
+            <input
+              type="radio"
+              value={false}
+              bind:group={currentTool.settings.isFilled}
+              hidden
+            />
+            <img src={rectangle} alt="Rectangle" />
+          </label>
         </div>
-      </div>
+      {/if}
     </div>
   </div>
+  <div class="drawingSpaceContainerSpacer"></div>
 </div>
 
 <style>
@@ -581,29 +579,22 @@
     object-position: center;
   }
 
-  .container {
+  .drawingSpaceContainer {
     position: absolute;
-    display: grid;
-    grid-template-columns: 1fr 8fr;
-    grid-template-rows: 100%;
-    gap: 20px;
+    display: flex;
+    height: 100%;
+    width: 100%;
+    padding: 1rem 2rem;
+    gap: 3%;
+    justify-content: space-around;
   }
 
   canvas {
     border-style: solid;
+    margin: 1rem;
     border-width: 4px;
     border-color: #6e6e6e #404040 #404040 #6e6e6e;
-    width: 100%;
-    height: 100%;
     image-rendering: pixelated;
-  }
-
-  .overlay {
-    position: relative;
-    display: grid;
-    grid-template-columns: 1fr 9fr 1fr 1fr;
-    grid-template-rows: 100%;
-    gap: 5px;
   }
 
   .drawingSpace::before {
@@ -636,9 +627,6 @@
   .drawingSpace {
     position: relative;
     padding: 12px 12px 12px 16px;
-    height: 100%;
-    width: 108%;
-    margin-left: 6%;
     background: linear-gradient(to bottom, #6e6e6e 50%, #404040 50%);
     z-index: 2;
   }
@@ -799,5 +787,22 @@
     object-fit: fill;
     object-position: center;
     image-rendering: pixelated;
+  }
+
+  .userListSpace {
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem;
+    width: 8%;
+  }
+
+  .canvasSpace {
+    display: flex;
+    flex-direction: row;
+    max-width: 90%;
+  }
+
+  .drawingSpaceContainerSpacer {
+    width: 8%;
   }
 </style>

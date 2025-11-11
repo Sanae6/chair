@@ -321,7 +321,7 @@
 
 </script>
 
-<div class="w-[256px]">
+<div class="w-[196px]">
     <canvas width=256 height=256 bind:this={pickerSquareCanvas} onpointerdown={pickerSquarePointerDown} onpointerup={pickerSquarePointerUp}></canvas>
     <canvas width=256 height=32 bind:this={pickerSliderCanvas} onpointerdown={pickerSliderPointerDown} onpointerup={pickerSliderPointerUp}></canvas>
     <div class="color-input-list">
@@ -363,13 +363,17 @@
 </svelte:head>
 
 <style>
+    canvas {
+        width: 100%;
+    }
+
     .color-input-list {
     position: relative;
     display: flex;
     gap: 5px;
     white-space: nowrap;
     place-items: center;
-    font-size: 2rem;
+    font-size: 1.4rem;
     color: rgb(224, 224, 224);
     font-family: "VT323";
     margin: 4px 1px;
