@@ -1,7 +1,6 @@
 <script lang="ts">
     import type { Color } from "$lib/network/prims";
-    import { onMount, untrack } from "svelte";
-    import { createTextChangeRange } from "typescript";
+    import { onMount } from "svelte";
 
     interface Props {
         color: Color,
@@ -10,64 +9,74 @@
         color = $bindable(),
     }: Props = $props();
 
+    let hsvColor = $derived(rgbToHsv(color));
+
+    let pickerSquareBkgCanvas: OffscreenCanvas;
     let pickerSquareCanvas: HTMLCanvasElement;
     let pickerSliderCanvas: HTMLCanvasElement;
 
     type HSVColor = {h: number, s: number , v: number}
 
-    function hsvToRgb(hsvColor: HSVColor): Color {
-        let h = hsvColor.h;
-        let s = hsvColor.s/100.0;
-        let v = hsvColor.v/100.0;
+    // The colour convertion functions are called often enough that there is lag
+    // from the amount of color objects generated. Instead of returning a new
+    // color object this method outputs by modifying an already created one
+    // If you wish to have a lasting copy of the output use {... hsvToRgbOutput}
+    let hsvToRgbOutput: Color = {r: 0, b: 0, g: 0, a: 255};
+    function hsvToRgb(hsvColor: HSVColor): void {
+        hsvToRgbNumericInput(hsvColor.h, hsvColor.s, hsvColor.v);
+    }
+    function hsvToRgbNumericInput(h: number, s: number, v: number): void {
+        s = s/100.0;
+        v = v/100.0;
 
         let chroma = v*s;
         h=h/60.0;
         let x = chroma*(1-Math.abs((h%2)-1));
 
-        let output: Color = {r: 0, b: 0, g: 0, a: 255}
-
         if (h<1) {
-            output.r = chroma;
-            output.g = x;
-            output.b = 0;
+            hsvToRgbOutput.r = chroma;
+            hsvToRgbOutput.g = x;
+            hsvToRgbOutput.b = 0;
         } else if (h<2) {
-            output.r = x;
-            output.g = chroma;
-            output.b = 0;
+            hsvToRgbOutput.r = x;
+            hsvToRgbOutput.g = chroma;
+            hsvToRgbOutput.b = 0;
         } else if (h<3) {
-            output.r = 0;
-            output.g = chroma;
-            output.b = x;
+            hsvToRgbOutput.r = 0;
+            hsvToRgbOutput.g = chroma;
+            hsvToRgbOutput.b = x;
         } else if (h<4) {
-            output.r = 0;
-            output.g = x;
-            output.b = chroma;
+            hsvToRgbOutput.r = 0;
+            hsvToRgbOutput.g = x;
+            hsvToRgbOutput.b = chroma;
         } else if (h<5) {
-            output.r = x;
-            output.g = 0;
-            output.b = chroma;
+            hsvToRgbOutput.r = x;
+            hsvToRgbOutput.g = 0;
+            hsvToRgbOutput.b = chroma;
         } else if (h<=6) {
-            output.r = chroma;
-            output.g = 0;
-            output.b = x;
+            hsvToRgbOutput.r = chroma;
+            hsvToRgbOutput.g = 0;
+            hsvToRgbOutput.b = x;
         }
         let m = v - chroma;
-        output.r += m;
-        output.g += m;
-        output.b += m;
-        output.r *= 255;
-        output.g *= 255;
-        output.b *= 255;
-
-
-        return output;
+        hsvToRgbOutput.r += m;
+        hsvToRgbOutput.g += m;
+        hsvToRgbOutput.b += m;
+        hsvToRgbOutput.r *= 255;
+        hsvToRgbOutput.g *= 255;
+        hsvToRgbOutput.b *= 255;
     }
+
 
     // js % operator is remainder, not a modulo
     function mod(n: number, m: number): number {
         return ((n % m) + m) % m;
     }
 
+    // The colour convertion functions are called often enough that there is lag
+    // from the amount of color objects generated. Instead of returning a new
+    // color object this method outputs by modifying an already created one
+    // If you wish to have a lasting copy of the output use {... rgbToHsvOutput}
     function rgbToHsv(color: Color): HSVColor {
         let r = color.r/255;
         let g = color.g/255;
@@ -97,27 +106,26 @@
     }
 
     function pickerSquareCanvasCoordsToColor(x: number, y: number): Color {
-        let hsvColor = rgbToHsv(color);
-        let newColor = hsvToRgb({h: hsvColor.h, s: x*100/pickerSquareCanvas.width, v: (pickerSquareCanvas.height-y)*100/pickerSquareCanvas.height});
-        return newColor;
+        hsvToRgbNumericInput(hsvColor.h, x*100/pickerSquareCanvas.width, (pickerSquareCanvas.height-y)*100/pickerSquareCanvas.height);
+        return hsvToRgbOutput;
     }
 
     function pickerSliderCanvasCoordsToColor(x: number, maxSV: boolean): Color {
-        let hsvColor = rgbToHsv(color);
         if (maxSV) {
-            return hsvToRgb({h: x*359/pickerSliderCanvas.width, s: 100, v: 100});
+            hsvToRgbNumericInput(x*359/pickerSliderCanvas.width, 100, 100);
         } else {
-            return hsvToRgb({h: x*359/pickerSliderCanvas.width, s: hsvColor.s, v: hsvColor.v});
+            hsvToRgbNumericInput(x*359/pickerSliderCanvas.width, hsvColor.s, hsvColor.v);
         }
+        return hsvToRgbOutput;
     }
 
-    function redrawPickerSquare() {
-        // Draw colour square
-        let ctxOptional: CanvasRenderingContext2D | null = pickerSquareCanvas.getContext("2d");
+    function redrawPickerSquareBkg() {
+        let ctxOptional: OffscreenCanvasRenderingContext2D | null = pickerSquareBkgCanvas.getContext("2d");
         if (ctxOptional == null) return;
-        let ctx: CanvasRenderingContext2D = ctxOptional;
-        let imageData = ctx.getImageData(0, 0, pickerSquareCanvas.width, pickerSquareCanvas.height);
+        let ctx: OffscreenCanvasRenderingContext2D = ctxOptional;
 
+        const startTime = performance.now();
+        let imageData = ctx.getImageData(0, 0, pickerSquareCanvas.width, pickerSquareCanvas.height);
         for (let y = 0; y < pickerSquareCanvas.height; y++) {
             for (let x = 0; x < pickerSquareCanvas.width; x++) {
                 let pixelColor = pickerSquareCanvasCoordsToColor(x, y);
@@ -128,11 +136,29 @@
                 imageData.data[pixelIdx+3] = 255;
             }
         }
-
         ctx.putImageData(imageData, 0, 0);
+        const endTime = performance.now();
+        console.log(`Took ${endTime - startTime}ms`)
+    }
+
+
+    function redrawPickerSquare() {
+        // const startTime = performance.now();
+
+        // Draw colour square
+        let ctxOptional: CanvasRenderingContext2D | null = pickerSquareCanvas.getContext("2d");
+        if (ctxOptional == null) return;
+        let ctx: CanvasRenderingContext2D = ctxOptional;
+        let bkgCtxOptional: OffscreenCanvasRenderingContext2D | null = pickerSquareBkgCanvas.getContext("2d");
+        if (bkgCtxOptional == null) return;
+        let bkgCtx: OffscreenCanvasRenderingContext2D = bkgCtxOptional;
+
+        redrawPickerSquareBkg();
+        const bkgImdateDate = bkgCtx.getImageData(0, 0, pickerSquareBkgCanvas.width, pickerSquareBkgCanvas.height);
+        ctx.putImageData(bkgImdateDate, 0, 0);
+
 
         // Draw current colour marker
-        const hsvColor = rgbToHsv(color);
         const x = hsvColor.s*pickerSquareCanvas.width/100;
         const y = pickerSquareCanvas.height - hsvColor.v*pickerSquareCanvas.width/100;
         ctx.strokeStyle = hsvColor.v > 50 ? "#000000FF" : "#FFFFFFFF";
@@ -140,6 +166,8 @@
         ctx.beginPath();
         ctx.rect(x-3, y-3, 6, 6);
         ctx.stroke();
+        // const endTime = performance.now();
+        // console.log(`Took ${endTime - startTime}ms`);
     }
 
     function redrawPickerSlider() {
@@ -163,7 +191,6 @@
         ctx.putImageData(imageData, 0, 0);
 
         // Draw current hue marker
-        const hsvColor = rgbToHsv(color);
         const x = hsvColor.h*pickerSliderCanvas.width/359;
         ctx.strokeStyle = "#000000FF";
         ctx.lineWidth = 2;
@@ -173,6 +200,8 @@
     }
 
     onMount(()=> {
+        pickerSquareBkgCanvas = new OffscreenCanvas(pickerSquareCanvas.width, pickerSquareCanvas.height);
+
         redrawPickerSquare();
         redrawPickerSlider();
     })
@@ -236,7 +265,30 @@
         setColorFromSliderPointerEvent(event);
     }
 
-    function setColorChannelByString(newVal: string, channel: "r"|"g"|"b"|"h"|"s"|"v") {
+    function getColorChannelAsString(channel: "r"|"g"|"b"|"h"|"s"|"v"): string {
+        switch(channel) { 
+            case "r": {
+                return Math.round(color.r).toString();
+            }
+            case "g": {
+                return Math.round(color.g).toString();
+            }
+            case "b": {
+                return Math.round(color.b).toString();
+            }
+            case "h": {
+                return Math.round(hsvColor.h).toString();
+            }
+            case "s": {
+                return Math.round(hsvColor.s).toString();
+            }
+            case "v": {
+                return Math.round(hsvColor.v).toString();
+            }
+        }
+    }
+
+    function setColorChannelByString(channel: "r"|"g"|"b"|"h"|"s"|"v", newVal: string) {
         newVal = newVal.replaceAll(/\D/g, "");
         if (newVal == "") newVal = "0";
         let newNum: number = parseInt(newVal);
@@ -256,21 +308,24 @@
             } break;
             case "h": {
                 newNum = Math.max(0, Math.min(newNum, 360));
-                let hsvColor = rgbToHsv(color);
-                hsvColor.h = newNum;
-                color = hsvToRgb(hsvColor);
+                let hsvColorCopy: HSVColor = {... hsvColor};
+                hsvColorCopy.h = newNum;
+                hsvToRgb(hsvColorCopy);
+                color = {... hsvToRgbOutput};
             } break;
             case "s": {
                 newNum = Math.max(0, Math.min(newNum, 100));
-                let hsvColor = rgbToHsv(color);
-                hsvColor.s = newNum;
-                color = hsvToRgb(hsvColor);
+                let hsvColorCopy: HSVColor = {... hsvColor};
+                hsvColorCopy.s = newNum;
+                hsvToRgb(hsvColorCopy);
+                color = {... hsvToRgbOutput};
             } break;
             case "v": {
                 newNum = Math.max(0, Math.min(newNum, 100));
-                let hsvColor = rgbToHsv(color);
-                hsvColor.v = newNum;
-                color = hsvToRgb(hsvColor);
+                let hsvColorCopy: HSVColor = {... hsvColor};
+                hsvColorCopy.v = newNum;
+                hsvToRgb(hsvColorCopy);
+                color = {... hsvToRgbOutput};
             } break;
         }
     }
@@ -283,29 +338,29 @@
     <div class="color-input-list">
         <div class="shrink flex min-w-0">
             <label for="r">R:</label>
-            <input class="color-input" type="text" id="r" bind:value={()=> Math.round(color.r), (v)=>{setColorChannelByString(v, "r")}}/>
+            <input class="color-input" type="text" id="r" bind:value={()=>getColorChannelAsString("r"), v=>setColorChannelByString("r", v)}/>
         </div>
         <div class="shrink flex min-w-0">
             <label for="g">G:</label>
-            <input class="color-input" type="text" id="g" bind:value={()=> Math.round(color.g), (v)=>{setColorChannelByString(v, "g")}}/>
+            <input class="color-input" type="text" id="g" bind:value={()=>getColorChannelAsString("g"), v=>setColorChannelByString("g", v)}/>
         </div>
         <div class="shrink flex min-w-0">
             <label for="b">B:</label>
-            <input class="color-input" type="text" id="b" bind:value={()=> Math.round(color.b), (v)=>{setColorChannelByString(v, "b")}}/>        
+            <input class="color-input" type="text" id="b" bind:value={()=>getColorChannelAsString("b"), v=>setColorChannelByString("b", v)}/>        
         </div>
     </div>
     <div class="color-input-list">
         <div class="shrink flex min-w-0">
             <label for="h">H:</label>
-            <input class="color-input" type="text" id="h" bind:value={()=> Math.round(rgbToHsv(color).h), (v)=>{setColorChannelByString(v, "h")}}/>
+            <input class="color-input" type="text" id="h" bind:value={()=>getColorChannelAsString("h"), v=>setColorChannelByString("h", v)}/>
         </div>
         <div class="shrink flex min-w-0">
             <label for="s">S:</label>
-            <input class="color-input" type="text" id="s" bind:value={()=> Math.round(rgbToHsv(color).s), (v)=>{setColorChannelByString(v, "s")}}/>
+            <input class="color-input" type="text" id="s" bind:value={()=>getColorChannelAsString("s"), v=>setColorChannelByString("s", v)}/>
         </div>
         <div class="shrink flex min-w-0">
             <label for="v">V:</label>
-            <input class="color-input" type="text" id="v" bind:value={()=> Math.round(rgbToHsv(color).v), (v)=>{setColorChannelByString(v, "v")}}/>
+            <input class="color-input" type="text" id="v" bind:value={()=>getColorChannelAsString("v"), v=>setColorChannelByString("v", v)}/>
         </div>
     </div>
 </div>
