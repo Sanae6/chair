@@ -16,12 +16,6 @@ export function POST({ url }) {
   try { size.y = parseInt(height) } catch { return error(400, { message: "height must be an integer" }) }
   if (size.x <= 0 || size.y <= 0) return error(400, { message: "width and height must be positive integers" });
 
-  const tryRoom = RoomManager.instance().getRoom(room);
-  if (tryRoom && tryRoom.moderators.value.has(creator) && tryRoom.size.x == size.x && tryRoom.size.y == size.y) {
-    // almost certainly meant to rejoin the same room... providing this as an easy way to get back into a room that's already created
-    return json({ roomId: tryRoom.id, moderatorPassword: tryRoom.moderatorPassword }, { status: 200 });
-  }
-
   const roomInfo = RoomManager.instance().createRoom(room, size, creator);
 
   if (!roomInfo)

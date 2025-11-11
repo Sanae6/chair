@@ -12,6 +12,7 @@
 
   let requesting = $state(false);
   let lastError: string | undefined = $state(undefined);
+
   async function createRoom() {
     if (requesting) return false;
 
@@ -33,7 +34,6 @@
       let json = await res.json();
       if (res.status !== 201) {
         lastError = json.message;
-        alert(json.message);
       } else {
         const { roomId, moderatorPassword } = json;
         console.log(json);
@@ -58,7 +58,6 @@
       if (res.status !== 200) {
         const json = await res.json();
         lastError = json.message;
-        alert(json.message);
       } else goto(`/testing/${joinCode}/${username.value}`);
     } catch (e) {
       console.error(e);
@@ -88,15 +87,15 @@
     </div>
     <div class="pixel">
       <label for="username">Username:</label>
-      <input type="text" id="username" bind:value={$username} />
+      <input type="text" id="username" bind:value={$username} maxlength="12"/>
     </div>
     <div class="buttons">
       <div class="pixel">
-        <label for="roomName">Room name:</label>
+        <label for="roomName">Name:</label>
         <input type="text" id="roomName" bind:value={roomName} />
-        <label for="width">Width:</label>
+        <label for="width">W:</label>
         <input type="text" id="width" bind:value={$width} />
-        <label for="height">Height:</label>
+        <label for="height">x H:</label>
         <input type="text" id="height" bind:value={$height} />
       </div>
       <button
@@ -126,7 +125,11 @@
         <p>Join Room</p>
       </button>
     </div>
-    <div id="error-message" hidden class="pixel">{lastError}</div>
+    {#if lastError}
+    <div id="error-message"  class="pixel">
+        <p>{lastError}</p>
+    </div>
+    {/if}
     <div></div>
   </div>
   <div class="side"></div>
@@ -264,6 +267,7 @@
     gap: 1rem;
     margin: 10px;
     place-items: center;
+    text-align: center;
   }
 
   .pixel label {
@@ -276,12 +280,20 @@
   .pixel input {
     font-family: "VT323";
     text-transform: uppercase;
-    font-size: clamp(0.75rem, 3vw, 1.5rem);
+    font-size: 20px;
     color: rgb(224, 224, 224);
     width: 100%;
     background-color: #2e2e2e;
     padding: 8px 10px;
     border-radius: 5px;
+  }
+
+  .pixel p {
+    font-family: "VT323";
+    text-transform: uppercase;
+    font-size: clamp(1rem, 3vw, 2rem);
+    color: rgb(255, 123, 0);
+    text-align: center;
   }
 
   .pixel::before {
