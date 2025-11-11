@@ -14,6 +14,7 @@
   import type { Operation } from "$lib/network/operation";
   import { tools, type Tool } from "$lib/controller/tool";
   import background from "$lib/assets/background.png";
+  import box from "$lib/assets/box.png";
   import circle from "$lib/assets/circ.png";
   import rectangle from "$lib/assets/rect.png";
   import { applyInverseTransform } from "$lib/network/prims";
@@ -386,21 +387,26 @@
 <div class="background">
   <img src={background} alt="whoops" />
 </div>
+<div class="container">
+<div class="drawingSpace">
+  <div class="flex flex-col p-2">
+    <div class = "pixel"><p>Join code: {data.room}</p></div>
+    {#each userList as user}
+      <div class="flex flex-row">
+        <button
+          onclick={() => kickUser(user.username)}
+          style:color={showIf(user.username != data.username &&
+            moderatorPassword.value != "")}>🦶</button
+        >
+        <div style:color={showIf(user.moderator)}>👑</div>
+        <div class = "pixel"><p>{user.username}</p></div>
+      </div>
+    {/each}
+  </div>
+</div>
 <div class="drawingSpace">
   <div class="overlay">
     <div class="flex flex-col p-2">
-      <div class = "pixel"><p>Join code: {data.room}</p></div>
-      {#each userList as user}
-        <div class="flex flex-row">
-          <button
-            onclick={() => kickUser(user.username)}
-            style:color={showIf(user.username != data.username &&
-              moderatorPassword.value != "")}>🦶</button
-          >
-          <div style:color={showIf(user.moderator)}>👑</div>
-          <div class = "pixel"><p>{user.username}</p></div>
-        </div>
-      {/each}
       <div class="pixel">
         <ColourPicker bind:color={foregroundColor}></ColourPicker>
       </div>
@@ -422,12 +428,13 @@
     <div class="flex flex-col justify-between p-2">
       <div class="flex flex-col gap-2">
         {#each tools as tool}
-          <button onclick={() => (currentTool = tool)} class="pixelButton">
+          <label class="pixelButton">
+            <input type="radio" value={tool} bind:group={currentTool} hidden/>
             <img src = {tool.imgLink} alt = "{tool.displayName} image"/>
-          </button>
+          </label>
         {/each}
       </div>
-      <button class="pixelButton" onclick={downloadCanvas}>DL</button>
+      <button class="pixelButton" onclick={downloadCanvas}><p>DL</p></button>
     </div>
     <div class="flex flex-col gap-2 p-1">
       <div>
@@ -454,47 +461,35 @@
         {/if}
         {#if currentTool.applicableSettings.has("brushShape")}
           <div class="pixel"><p>Shape</p>
-          <button
-            onclick={() => (currentTool.settings.brushShape = "Square")}
-            class="pixelButton"
-          >
-            <img src = {rectangle} alt = "Rectangle"/>
-          </button>
-          <button
-            onclick={() => (currentTool.settings.brushShape = "Circle")}
-            class="pixelButton"
-          >
-            <img src = {circle} alt = "Circle"/>
-          </button>
+          <label class="pixelButton">            
+              <input type="radio" value={"Square"} bind:group={currentTool.settings.brushShape} hidden/>
+              <img src = {rectangle} alt = "Rectangle"/>
+            </label>
+            <label class="pixelButton">            
+              <input type="radio" value={"Circle"} bind:group={currentTool.settings.brushShape} hidden/>
+              <img src = {circle} alt = "Circle"/>
+            </label>
           </div>
         {/if}
         {#if currentTool.applicableSettings.has("isFilled")}
-          <button
-            onclick={() => (currentTool.settings.isFilled = true)}
-            class="pixelButton"
-          >
-            Filled
-          </button>
-          <button
-            onclick={() => (currentTool.settings.isFilled = false)}
-            class="pixelButton"
-          >
-            Empty
-          </button>
+          <div class="pixel"> <p> Fills </p>
+            <label class="pixelButton">            
+              <input type="radio" value={true} bind:group={currentTool.settings.isFilled} hidden/>
+              <img src = {box} alt = "Box"/>
+            </label>
+            <label class="pixelButton">            
+              <input type="radio" value={false} bind:group={currentTool.settings.isFilled} hidden/>
+              <img src = {rectangle} alt = "Rectangle"/>
+            </label>
+          </div>
         {/if}
       </div>
     </div>
   </div>
 </div>
+</div>
 
 <style>
-  canvas {
-    outline: auto 20px cornflowerblue;
-    width: 100%;
-    height: 100%;
-    image-rendering: pixelated;
-  }
-
   .background {
     position: absolute;
     image-rendering: pixelated;
@@ -507,6 +502,23 @@
     height: 100%;
     object-fit: fill;
     object-position: center;
+  }
+
+  .container {
+    position: absolute;
+    display: grid;
+    grid-template-columns: 1fr 8fr;
+    grid-template-rows: 100%;
+    gap: 20px;
+  }
+
+  canvas {
+    border-style: solid;
+    border-width: 4px;
+    border-color: #6e6e6e #404040 #404040 #6e6e6e;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
   }
 
   .overlay {
@@ -545,14 +557,11 @@
   }
 
   .drawingSpace {
-    position: fixed;
-    object-position: center;
+    position: relative;
     padding: 12px 12px 12px 16px;
     height: 100%;
-    width: 66%;
-    margin-left: 17%;
-    margin-right: 17%;
-    object-fit: fill;
+    width: 108%;
+    margin-left: 6%;
     background: linear-gradient(to bottom, #6e6e6e 50%, #404040 50%);
     z-index: 2;
   }
@@ -575,6 +584,41 @@
 
   .pixelButton:active {
     top: 2px;
+  }
+
+  .pixelButton:has(input:checked) {
+    padding: 10px 10px;
+    position: relative;
+    background: linear-gradient(to bottom, #a18965 50%, #503f26 50%);
+    width: auto;
+    z-index: 2;
+  }
+
+  .pixelButton:has(input:checked)::before {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: -10px;
+    right: -10px;
+    background: linear-gradient(to right, #a18965 50%, #503f26 50%);
+    z-index: -1;
+  }
+
+  .pixelButton:has(input:checked)::after{
+    content: "";
+    display: block;
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: -6px;
+    right: -6px;
+    background: #806947;
+    border-style: solid;
+    border-width: 4px;
+    border-color: #a18965 #503f26 #503f26 #a18965;
+    z-index: -1;
   }
 
   .pixelButton {
@@ -603,7 +647,7 @@
     z-index: -1;
   }
 
-  .pixelButton::after {
+  .pixelButton::after{
     content: "";
     display: block;
     position: absolute;
