@@ -46,29 +46,7 @@
     let displayCtx: CanvasRenderingContext2D = displayCtxOptional;
     displayCtx.imageSmoothingEnabled = false;
 
-    let [newConnection, connectedPacket] = await Connection.connect(
-      data.username,
-      data.room,
-    );
-    connection = newConnection;
-    canvasSize = connectedPacket.size;
-    if (canvasSize.x > canvasSize.y) { // This condition needs to be changed if the display canvas isn't square
-      displayTransform2D = transformFromScaling(512/canvasSize.x, 512/canvasSize.x);
-      // Offset to center canvas
-      displayTransform2D = composeTransforms(displayTransform2D, transformFromTranslation(0, (canvasSize.x-canvasSize.y)/2));
-    } else {
-      displayTransform2D = transformFromScaling(512/canvasSize.y, 512/canvasSize.y);
-      displayTransform2D = composeTransforms(displayTransform2D, transformFromTranslation((canvasSize.y-canvasSize.x)/2, 0));
-    }
-    console.log(canvasSize);
-    surfaceCanvas = new OffscreenCanvas(canvasSize.x, canvasSize.y);
-    toolPreviewCanvas = new OffscreenCanvas(canvasSize.x, canvasSize.y);
-    backgroundCanvas = new OffscreenCanvas(canvasSize.x, canvasSize.y);
-    surface = new Surface(canvasSize, surfaceCanvas.getContext("2d")!);
-    surface.clear();
-    surface.subscribeDraw(refreshDisplayCanvas);
-    drawBackgroundCanvas();
-    refreshDisplayCanvas();
+    connection = await Connection.connect(data.username, data.room);
     connection.setHandler("sync", (packet) => {
       console.log("received sync", packet);
       surface.handleSync(packet.url);
@@ -86,11 +64,45 @@
       alert("you were kicked from the room!");
       goto("/");
     });
-    connection.setHandler("close", () => {
+    connection.setHandler("close", (packet) => {
+      console.log("closed");
       if (kickedFirst) return;
-      alert("connection closed!");
+      alert(packet.reason ?? "connection closed");
       goto("/");
-    })
+    });
+
+    const connectedPacket = await connection.connect();
+    canvasSize = connectedPacket.size;
+    if (canvasSize.x > canvasSize.y) {
+      // This condition needs to be changed if the display canvas isn't square
+      displayTransform2D = transformFromScaling(
+        512 / canvasSize.x,
+        512 / canvasSize.x,
+      );
+      // Offset to center canvas
+      displayTransform2D = composeTransforms(
+        displayTransform2D,
+        transformFromTranslation(0, (canvasSize.x - canvasSize.y) / 2),
+      );
+    } else {
+      displayTransform2D = transformFromScaling(
+        512 / canvasSize.y,
+        512 / canvasSize.y,
+      );
+      displayTransform2D = composeTransforms(
+        displayTransform2D,
+        transformFromTranslation((canvasSize.y - canvasSize.x) / 2, 0),
+      );
+    }
+    console.log(canvasSize);
+    surfaceCanvas = new OffscreenCanvas(canvasSize.x, canvasSize.y);
+    toolPreviewCanvas = new OffscreenCanvas(canvasSize.x, canvasSize.y);
+    backgroundCanvas = new OffscreenCanvas(canvasSize.x, canvasSize.y);
+    surface = new Surface(canvasSize, surfaceCanvas.getContext("2d")!);
+    surface.clear();
+    surface.subscribeDraw(refreshDisplayCanvas);
+    drawBackgroundCanvas();
+    refreshDisplayCanvas();
   });
 
   let pointerState: PointerState = {
@@ -109,7 +121,7 @@
 
   let stateTrackedTools: Array<Tool> = $state(tools);
   let currentTool: Tool = $state(stateTrackedTools[0]);
-  let foregroundColor: Color = $state({r: 100, g: 149, b: 237, a: 255});
+  let foregroundColor: Color = $state({ r: 100, g: 149, b: 237, a: 255 });
 
   function handleOperation(operation: Operation) {
     surface.handleOperation(operation);
@@ -121,7 +133,9 @@
 
   function draw() {
     if (currentTool.generateOperation != undefined) {
-      handleOperation(currentTool.generateOperation(pointerState, foregroundColor));
+      handleOperation(
+        currentTool.generateOperation(pointerState, foregroundColor),
+      );
     }
   }
 
@@ -162,16 +176,16 @@
       backgroundCtxOptional;
 
     backgroundCtx.fillRect(0, 0, canvasSize.x, canvasSize.y);
-    const color1: Color = {r: 120, b: 120, g: 120, a: 255};
-    const color2: Color = {r: 190, b: 190, g: 190, a: 255};
+    const color1: Color = { r: 120, b: 120, g: 120, a: 255 };
+    const color2: Color = { r: 190, b: 190, g: 190, a: 255 };
     const gridTileWidth: number = 4;
     for (let y = 0; y < Math.ceil(canvasSize.y / gridTileWidth); y++) {
       for (let x = 0; x < Math.ceil(canvasSize.x / gridTileWidth); x++) {
         let color = (x + y) % 2 == 0 ? color1 : color2;
         drawFilledRect(
           backgroundCtx,
-          {x: x * gridTileWidth, y: y * gridTileWidth},
-          {x: gridTileWidth, y: gridTileWidth},
+          { x: x * gridTileWidth, y: y * gridTileWidth },
+          { x: gridTileWidth, y: gridTileWidth },
           color,
         );
       }
@@ -246,9 +260,13 @@
     });
 
     let previousButton1 = pointerState.button1;
-    pointerState.button1 = (event.buttons&1)==1;
+    pointerState.button1 = (event.buttons & 1) == 1;
     pointerState.previouslyDrawing = pointerState.drawing;
-    if (previousButton1 == false && pointerState.button1 == true && event.type != "pointerenter") {
+    if (
+      previousButton1 == false &&
+      pointerState.button1 == true &&
+      event.type != "pointerenter"
+    ) {
       pointerState.firstPos = pointerState.position;
       pointerState.drawing = true;
     } else if (previousButton1 == true && pointerState.button1 == false) {
@@ -256,57 +274,82 @@
     }
 
     let previousButton3 = pointerState.button3;
-    pointerState.button3 = (event.buttons&4)==4;
-    if (previousButton3 == false && pointerState.button3 == true && event.type != "pointerenter") {
+    pointerState.button3 = (event.buttons & 4) == 4;
+    if (
+      previousButton3 == false &&
+      pointerState.button3 == true &&
+      event.type != "pointerenter"
+    ) {
       pointerState.panning = true;
     } else if (previousButton3 == true && pointerState.button3 == false) {
       pointerState.panning = false;
     }
-
 
     pointerState.ctrlModifier = event.ctrlKey;
     pointerState.altModifier = event.altKey;
     pointerState.shiftModifier = event.shiftKey;
 
     // Redraw tool preview
-    const pointerMoved = (pointerState.position.x != pointerState.previousPos.x ||
-                        pointerState.position.y != pointerState.previousPos.y);
+    const pointerMoved =
+      pointerState.position.x != pointerState.previousPos.x ||
+      pointerState.position.y != pointerState.previousPos.y;
     if (pointerMoved) refreshToolPreviewCanvas();
 
     // Handle tool usage
     switch (currentTool.applicationType) {
-      case "click_drag": {
-        if (pointerState.drawing && (pointerMoved || !pointerState.previouslyDrawing)) {
-          draw();
+      case "click_drag":
+        {
+          if (
+            pointerState.drawing &&
+            (pointerMoved || !pointerState.previouslyDrawing)
+          ) {
+            draw();
+          }
         }
-      } break;
-      case "click_release": {
-        if (!pointerState.drawing && pointerState.previouslyDrawing) {
-          draw();
+        break;
+      case "click_release":
+        {
+          if (!pointerState.drawing && pointerState.previouslyDrawing) {
+            draw();
+          }
         }
-      } break;
-      case "single_click": {
-        if (pointerState.drawing && !pointerState.previouslyDrawing) {
-          draw();
+        break;
+      case "single_click":
+        {
+          if (pointerState.drawing && !pointerState.previouslyDrawing) {
+            draw();
+          }
         }
-      } break;
-      case "eyedropper": {
-        if (pointerState.drawing) {
-          // @ts-ignore
-          let imageData: ImageData = surfaceCanvas.getContext("2d")?.getImageData(pointerState.position.x, pointerState.position.y, 1, 1);
-          let newColor = {
-            r: imageData.data[0],
-            g: imageData.data[1],
-            b: imageData.data[2],
-            a: imageData.data[3],
-          };
-          if (newColor.a == 255) foregroundColor = newColor;
+        break;
+      case "eyedropper":
+        {
+          if (pointerState.drawing) {
+            // @ts-ignore
+            let imageData: ImageData = surfaceCanvas
+              .getContext("2d")
+              ?.getImageData(
+                pointerState.position.x,
+                pointerState.position.y,
+                1,
+                1,
+              );
+            let newColor = {
+              r: imageData.data[0],
+              g: imageData.data[1],
+              b: imageData.data[2],
+              a: imageData.data[3],
+            };
+            if (newColor.a == 255) foregroundColor = newColor;
+          }
         }
-      } break;
+        break;
     }
 
     // Pan canvas
-    if (pointerState.panning || pointerState.drawing && currentTool.applicationType == "pan") {
+    if (
+      pointerState.panning ||
+      (pointerState.drawing && currentTool.applicationType == "pan")
+    ) {
       const rect = displayCanvas.getClientRects()[0];
       // Pointer movement transformed to be relative to displayCanvas size
       let movement: Vec2 = {
@@ -321,7 +364,6 @@
       refreshDisplayCanvas();
     }
   }
-
 
   function wheel(event: WheelEvent) {
     let mousePos = clientToDisplayCanvasCoords({
@@ -373,7 +415,7 @@
 
   function downloadCanvas() {
     surfaceCanvas.convertToBlob().then((blob) => {
-      let link = document.createElement('a');
+      let link = document.createElement("a");
       link.download = `${data.room}_exported.png`;
       link.href = window.URL.createObjectURL(blob);
       link.click();
@@ -394,105 +436,134 @@
   <img src={background} alt="whoops" />
 </div>
 <div class="container">
-<div class="drawingSpace">
-  <div class="flex flex-col p-2">
-    <div class = "pixel"><p>Join code: {data.room}</p></div>
-    {#each userList as user}
-      <div class="flex flex-row">
-        <button
-          onclick={() => kickUser(user.username)}
-          style:color={showIf(user.username != data.username &&
-            moderatorPassword.value != "")}>🦶</button
-        >
-        <div style:color={showIf(user.moderator)}>👑</div>
-        <div class = "pixel"><p>{user.username}</p></div>
-      </div>
-    {/each}
-  </div>
-</div>
-<div class="drawingSpace">
-  <div class="overlay">
+  <div class="drawingSpace">
     <div class="flex flex-col p-2">
-      <div class="pixel">
-        <ColourPicker bind:color={foregroundColor}></ColourPicker>
-      </div>
-    </div>
-    <canvas
-      bind:this={displayCanvas}
-      width="512"
-      height="512"
-      onpointerdown={pointerDown}
-      onpointerup={pointerUp}
-      onpointermove={handlePointerEvent}
-      onpointerenter={handlePointerEvent}
-      onpointerleave={pointerLeave}
-      onwheel={wheel}
-      oncontextmenu={(e) => {
-        e.preventDefault();
-      }}
-    ></canvas>
-    <div class="flex flex-col justify-between p-2">
-      <div class="flex flex-col gap-2">
-        {#each stateTrackedTools as tool}
-          <label class="pixelButton">
-            <input type="radio" value={tool} bind:group={currentTool} hidden/>
-            <img src = {tool.imgLink} alt = "{tool.displayName} image"/>
-          </label>
-        {/each}
-      </div>
-      <button class="pixelButton" onclick={downloadCanvas}><p>DL</p></button>
-    </div>
-    <div class="flex flex-col gap-2 p-1">
-      <div>
-        {#if currentTool.applicableSettings.has("brushSize")}
-          <div class="pixel"><p>Size</p>
+      <div class="pixel"><p>Join code: {data.room}</p></div>
+      {#each userList as user}
+        <div class="flex flex-row">
           <button
-            onclick={() => (currentTool.settings.brushSize += 1)}
-            class="pixelButton"
+            onclick={() => kickUser(user.username)}
+            style:color={showIf(
+              user.username != data.username && moderatorPassword.value != "",
+            )}>🦶</button
           >
-            <p>+</p>
-          </button>
-          <div class="pixel"><p>{currentTool.settings.brushSize}</p></div>
-          <button
-            onclick={() =>
-              (currentTool.settings.brushSize = Math.max(
-                1,
-                currentTool.settings.brushSize - 1,
-              ))}
-            class="pixelButton"
-          >
-            <p>-</p>
-          </button>
-          </div>
-        {/if}
-        {#if currentTool.applicableSettings.has("brushShape")}
-          <div class="pixel"><p>Shape</p>
-          <label class="pixelButton">            
-              <input type="radio" value={"Square"} bind:group={currentTool.settings.brushShape} hidden/>
-              <img src = {rectangle} alt = "Rectangle"/>
+          <div style:color={showIf(user.moderator)}>👑</div>
+          <div class="pixel"><p>{user.username}</p></div>
+        </div>
+      {/each}
+    </div>
+  </div>
+  <div class="drawingSpace">
+    <div class="overlay">
+      <div class="flex flex-col p-2">
+        <div class="pixel">
+          <ColourPicker bind:color={foregroundColor}></ColourPicker>
+        </div>
+      </div>
+      <canvas
+        bind:this={displayCanvas}
+        width="512"
+        height="512"
+        onpointerdown={pointerDown}
+        onpointerup={pointerUp}
+        onpointermove={handlePointerEvent}
+        onpointerenter={handlePointerEvent}
+        onpointerleave={pointerLeave}
+        onwheel={wheel}
+        oncontextmenu={(e) => {
+          e.preventDefault();
+        }}
+      ></canvas>
+      <div class="flex flex-col justify-between p-2">
+        <div class="flex flex-col gap-2">
+          {#each stateTrackedTools as tool}
+            <label class="pixelButton">
+              <input
+                type="radio"
+                value={tool}
+                bind:group={currentTool}
+                hidden
+              />
+              <img src={tool.imgLink} alt="{tool.displayName} image" />
             </label>
-            <label class="pixelButton">            
-              <input type="radio" value={"Circle"} bind:group={currentTool.settings.brushShape} hidden/>
-              <img src = {circle} alt = "Circle"/>
-            </label>
-          </div>
-        {/if}
-        {#if currentTool.applicableSettings.has("isFilled")}
-          <div class="pixel"> <p> Fills </p>
-            <label class="pixelButton">            
-              <input type="radio" value={true} bind:group={currentTool.settings.isFilled} hidden/>
-              <img src = {box} alt = "Box"/>
-            </label>
-            <label class="pixelButton">            
-              <input type="radio" value={false} bind:group={currentTool.settings.isFilled} hidden/>
-              <img src = {rectangle} alt = "Rectangle"/>
-            </label>
-          </div>
-        {/if}
+          {/each}
+        </div>
+        <button class="pixelButton" onclick={downloadCanvas}><p>DL</p></button>
+      </div>
+      <div class="flex flex-col gap-2 p-1">
+        <div>
+          {#if currentTool.applicableSettings.has("brushSize")}
+            <div class="pixel">
+              <p>Size</p>
+              <button
+                onclick={() => (currentTool.settings.brushSize += 1)}
+                class="pixelButton"
+              >
+                <p>+</p>
+              </button>
+              <div class="pixel"><p>{currentTool.settings.brushSize}</p></div>
+              <button
+                onclick={() =>
+                  (currentTool.settings.brushSize = Math.max(
+                    1,
+                    currentTool.settings.brushSize - 1,
+                  ))}
+                class="pixelButton"
+              >
+                <p>-</p>
+              </button>
+            </div>
+          {/if}
+          {#if currentTool.applicableSettings.has("brushShape")}
+            <div class="pixel">
+              <p>Shape</p>
+              <label class="pixelButton">
+                <input
+                  type="radio"
+                  value={"Square"}
+                  bind:group={currentTool.settings.brushShape}
+                  hidden
+                />
+                <img src={rectangle} alt="Rectangle" />
+              </label>
+              <label class="pixelButton">
+                <input
+                  type="radio"
+                  value={"Circle"}
+                  bind:group={currentTool.settings.brushShape}
+                  hidden
+                />
+                <img src={circle} alt="Circle" />
+              </label>
+            </div>
+          {/if}
+          {#if currentTool.applicableSettings.has("isFilled")}
+            <div class="pixel">
+              <p>Fills</p>
+              <label class="pixelButton">
+                <input
+                  type="radio"
+                  value={true}
+                  bind:group={currentTool.settings.isFilled}
+                  hidden
+                />
+                <img src={box} alt="Box" />
+              </label>
+              <label class="pixelButton">
+                <input
+                  type="radio"
+                  value={false}
+                  bind:group={currentTool.settings.isFilled}
+                  hidden
+                />
+                <img src={rectangle} alt="Rectangle" />
+              </label>
+            </div>
+          {/if}
+        </div>
       </div>
     </div>
   </div>
-</div>
 </div>
 
 <style>
@@ -612,7 +683,7 @@
     z-index: -1;
   }
 
-  .pixelButton:has(input:checked)::after{
+  .pixelButton:has(input:checked)::after {
     content: "";
     display: block;
     position: absolute;
@@ -653,7 +724,7 @@
     z-index: -1;
   }
 
-  .pixelButton::after{
+  .pixelButton::after {
     content: "";
     display: block;
     position: absolute;

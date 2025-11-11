@@ -23,13 +23,13 @@ export class Server {
   }
 
   handleConnection(socket: WebSocket) {
-
-    console.log("connected",)
+    console.log("connected")
     socket.binaryType = "arraybuffer";
     let user: User | undefined = undefined;
     socket.on("message", (data, isBinary) => {
       if (isBinary) {
         socket.close(1007, "received unexpected binary message")
+        console.warn("closed for binary message");
         return;
       }
 
@@ -38,6 +38,7 @@ export class Server {
 
       if (user == undefined && packet.type != "connect") {
         socket.close(INVALID_DATA, "new connection didn't send a connect packet");
+        console.warn("closed for no connect");
         return
       }
 
@@ -46,6 +47,7 @@ export class Server {
         const room = RoomManager.instance().getRoom(connect.room);
         if (room == undefined) {
           socket.close(INVALID_DATA, "room does not exist");
+          console.warn("closed for no room");
           return;
         }
         user = new User(connect.name, room, socket);
@@ -69,8 +71,9 @@ export class Server {
 
     socket.on("close", (code, reason) => {
       console.log("closed", code, reason.toString("utf-8"));
-      
+
       if (user == undefined) return;
+
       user.room.users.update((users) => {
         if (users.get(user!.name) == user)
           users.delete(user!.name);
@@ -78,9 +81,5 @@ export class Server {
         return users;
       })
     });
-  }
-
-  onMessage() {
-
   }
 }

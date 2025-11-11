@@ -1,34 +1,25 @@
 import type { ConnectedPacket, Packet } from "$lib/network/packets";
 
+type Handler = Packet | { type: "close", reason: string | undefined };
+
 export class Connection {
   // connection factory
-  static async connect(user: string, room: string): Promise<[Connection, ConnectedPacket]> {
-    const connection = new Connection(new WebSocket("/"), user, room);
-    console.log("opening")
-    const packet = await connection.waitOpen();
-    console.log("open")
-    return [connection, packet];
+  static async connect(user: string, room: string): Promise<Connection> {
+    return new Connection(new WebSocket("/"), user, room);
   }
 
   private handlers: Map<string, (packet: any) => void> = new Map;
 
-  constructor(private socket: WebSocket, username: string, room: string) {
+  constructor(private socket: WebSocket, private username: string, private room: string) {
     socket.binaryType = "arraybuffer";
-    socket.addEventListener("open", () => {
-      this.send({
-        type: "connect",
-        room,
-        name: username,
-      });
-
-    });
 
     socket.addEventListener("message", (event) => {
-      this.handleMessage(JSON.parse(event.data));
+      this.handlePacket(JSON.parse(event.data));
     });
 
-    socket.addEventListener("close", () => {
-      this.handlers.get("close")?.({});
+    socket.addEventListener("close", (event) => {
+      console.log(event.reason);
+      this.handlers.get("close")?.({ type: "close", reason: event.reason });
     });
 
     if (import.meta.hot) {
@@ -44,20 +35,28 @@ export class Connection {
     this.socket.send(JSON.stringify(message));
   }
 
-  public setHandler<T extends Packet["type"], P extends Packet & { type: T }>(type: T | "close" | never, handler: (packet: P) => void) {
+  public setHandler<T extends Handler["type"], H extends Handler & { type: T }>(type: T | never, handler: (packet: H) => void) {
     this.handlers.set(type, handler);
   }
 
-  private handleMessage(message: Packet) {
-    console.log("got a packet", message);
+  private handlePacket(packet: Packet) {
+    console.log("got a packet", packet);
 
-    const handler = this.handlers.get(message.type);
-    if (handler) handler(message);
+    const handler = this.handlers.get(packet.type);
+    if (handler) handler(packet);
   }
 
-  private async waitOpen(): Promise<ConnectedPacket> {
-    return await new Promise(res =>
+  public async connect(): Promise<ConnectedPacket> {
+    const promise = new Promise<ConnectedPacket>(res =>
       this.setHandler("connected", (packet) => res(packet))
     );
+    this.socket.addEventListener("open", () => {
+      this.send({
+        type: "connect",
+        room: this.room,
+        name: this.username,
+      });
+    });
+    return await promise;
   }
 }
