@@ -80,8 +80,7 @@ export class Room {
   }
 
   public handleModerator(packet: ModeratorPacket, user: User) {
-    console.log("piss", packet);
-    if (packet.password !== this.moderatorPassword)
+    if (packet.password !== this.moderatorPassword || !this.moderators.value.has(user.name))
       return;
 
     switch (packet.data.type) {
