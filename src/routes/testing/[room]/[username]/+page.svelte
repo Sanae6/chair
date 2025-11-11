@@ -107,7 +107,8 @@
     shiftModifier: false,
   };
 
-  let currentTool: Tool = $state(tools[0]);
+  let stateTrackedTools: Array<Tool> = $state(tools);
+  let currentTool: Tool = $state(stateTrackedTools[0]);
   let foregroundColor: Color = $state({r: 100, g: 149, b: 237, a: 255});
 
   function handleOperation(operation: Operation) {
@@ -432,7 +433,7 @@
     ></canvas>
     <div class="flex flex-col justify-between p-2">
       <div class="flex flex-col gap-2">
-        {#each tools as tool}
+        {#each stateTrackedTools as tool}
           <label class="pixelButton">
             <input type="radio" value={tool} bind:group={currentTool} hidden/>
             <img src = {tool.imgLink} alt = "{tool.displayName} image"/>
