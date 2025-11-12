@@ -16,6 +16,7 @@
   import background from "$lib/assets/background.png";
   import box from "$lib/assets/box.png";
   import circle from "$lib/assets/circ.png";
+  import download from "$lib/assets/download.png";
   import rectangle from "$lib/assets/rect.png";
   import { applyInverseTransform } from "$lib/network/prims";
   import type { PointerState } from "$lib/util/pointerState";
@@ -422,6 +423,16 @@
       link.remove();
     });
   }
+
+  let colours:Color[] = $state([]);
+
+  function addColour() {
+    colours.push(foregroundColor);
+  }
+
+  function updateColour(newColour: Color) {
+    foregroundColor = newColour;
+  }
 </script>
 
 <svelte:head>
@@ -437,7 +448,7 @@
 </div>
 <div class="drawingSpaceContainer">
   <div class="drawingSpace userListSpace">
-    <div class="pixel"><p>Join code: {data.room}</p></div>
+    <div class="pixel"><p>JOIN CODE: {data.room}</p></div>
     {#each userList as user}
       <div class="flex flex-row">
         <button
@@ -456,8 +467,22 @@
       <div class="pixel">
         <ColourPicker bind:color={foregroundColor}></ColourPicker>
       </div>
-      <div class="pixel grow">
-        <!-- COLOUR PALLETE HERE! (or move this div above the colour picker either way) -->
+      <div class="pixel flex flex-col grow max-h-[53vh]">
+        <p class="shrink">COLOUR PALETTE</p>
+        <div class="pixelGrid w-[196px] grow">
+          {#each colours as colour}
+          <button 
+            aria-label="rgb({colour.r} {colour.g} {colour.b})"
+            onclick={()=>updateColour(colour)}
+            class="palette" style:background="rgb({colour.r} {colour.g} {colour.b})"
+          ></button>
+          {/each}
+        </div>
+        <button 
+          class="pixelButton shrink" 
+          style="width:100%;"
+          onclick={()=>addColour()}
+        ><p>+</p></button>
       </div>
     </div>
     <canvas
@@ -488,12 +513,14 @@
           </label>
         {/each}
       </div>
-      <button class="pixelButton" onclick={downloadCanvas}><p>DL</p></button>
+      <button class="pixelButton" onclick={downloadCanvas}>
+        <img src={download} alt="Download"/>
+      </button>
     </div>
     <div class="flex flex-col gap-2 p-1 w-[5vw] min-w-[100px]">
       {#if currentTool.applicableSettings.has("brushSize")}
         <div class="pixel">
-          <p>Size</p>
+          <p>SIZE</p>
           <button
             onclick={() => (currentTool.settings.brushSize += 1)}
             class="pixelButton"
@@ -515,7 +542,7 @@
       {/if}
       {#if currentTool.applicableSettings.has("brushShape")}
         <div class="pixel">
-          <p>Shape</p>
+          <p>SHAPE</p>
           <label class="pixelButton">
             <input
               type="radio"
@@ -538,7 +565,7 @@
       {/if}
       {#if currentTool.applicableSettings.has("isFilled")}
         <div class="pixel">
-          <p>Fills</p>
+          <p>FILLED</p>
           <label class="pixelButton">
             <input
               type="radio"
@@ -735,7 +762,6 @@
 
   .pixel {
     position: relative;
-    display: grid;
     margin: 10px;
     place-items: center;
   }
@@ -804,5 +830,33 @@
 
   .drawingSpaceContainerSpacer {
     width: 8%;
+  }
+
+  .palette:active{
+    top: 2px;
+  }
+
+  .palette {
+    content: "";
+    display: block;
+    border-style: solid;
+    border-width: 4px;
+    border-color: #6e6e6e #404040 #404040 #6e6e6e;
+    position: relative;
+    width: 28px;
+    height: 28px;
+  }
+
+  .pixelGrid {
+    display: grid;
+    grid-template-columns:repeat(7, 1fr);
+    grid-template-rows: repeat(auto-fit, 28px);
+    overflow:auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .pixelGrid::-webkit-scrollbar {
+    display: none;
   }
 </style>
