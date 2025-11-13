@@ -16,8 +16,10 @@
   import background from "$lib/assets/background.png";
   import box from "$lib/assets/box.png";
   import circle from "$lib/assets/circ.png";
+  import crown from "$lib/assets/crown.png";
   import download from "$lib/assets/download.png";
   import rectangle from "$lib/assets/rect.png";
+  import x from "$lib/assets/x.png";
   import { applyInverseTransform } from "$lib/network/prims";
   import type { PointerState } from "$lib/util/pointerState";
   import { localStore } from "$lib/util/stores";
@@ -450,16 +452,41 @@
   <div class="drawingSpace userListSpace">
     <div class="pixel"><p>JOIN CODE: {data.room}</p></div>
     {#each userList as user}
-      <div class="flex flex-row">
+    {#if user.username == data.username}
+      <div class="pixelUser flex flex-row">
+        <div style="width:16px; min-width:16px">
+        {#if user.moderator}
+          <img src={crown} alt="Crown"/>
+        {/if}
+        </div>
+        <div class="grow overflow-hidden w-[8%]"><p>{user.username}</p></div>
+        {#if user.username != data.username && moderatorPassword.value != ""}
         <button
           onclick={() => kickUser(user.username)}
-          style:color={showIf(
-            user.username != data.username && moderatorPassword.value != "",
-          )}>🦶</button
+          style="width:16px; min-width:16px"
         >
-        <div style:color={showIf(user.moderator)}>👑</div>
-        <div class="pixel"><p>{user.username}</p></div>
+          <img src={x} alt="Circle" />
+        </button>
+        {/if}
       </div>
+    {:else}
+      <div class="pixel flex flex-row">
+        <div style="width:16px; min-width:16px">
+        {#if user.moderator}
+          <img src={crown} alt="Crown"/>
+        {/if}
+        </div>
+        <div class="grow overflow-hidden w-[8%]"><p>{user.username}</p></div>
+        {#if user.username != data.username && moderatorPassword.value != ""}
+        <button
+          onclick={() => kickUser(user.username)}
+          style="width:16px; min-width:16px"
+        >
+          <img src={x} alt="Circle" />
+        </button>
+        {/if}
+      </div>
+    {/if}
     {/each}
   </div>
   <div class="drawingSpace canvasSpace">
@@ -768,7 +795,7 @@
 
   .pixel p {
     font-family: "VT323";
-    font-size: 20px;
+    font-size: 15px;
     color: rgb(224, 224, 224);
   }
 
@@ -807,6 +834,53 @@
     z-index: 2;
   }
 
+    .pixelUser {
+    position: relative;
+    margin: 10px;
+    place-items: center;
+  }
+
+  .pixelUser p {
+    font-family: "VT323";
+    font-size: 15px;
+    color: rgb(224, 224, 224);
+  }
+
+  .pixelUser::before {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: -10px;
+    right: -10px;
+    background: linear-gradient(to right, #a18965 50%, #503f26 50%);
+    z-index: -1;
+  }
+
+  .pixelUser::after {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: -6px;
+    right: -6px;
+    background: #806947;
+    border-style: solid;
+    border-width: 4px;
+    border-color: #a18965 #503f26 #503f26 #a18965;
+    z-index: -1;
+  }
+
+  .pixelUser {
+    padding: 10px 10px;
+    position: relative;
+    background: linear-gradient(to bottom, #a18965 50%, #503f26 50%);
+    width: auto;
+    z-index: 2;
+  }
+
   img {
     width: 100%;
     height: 100%;
@@ -819,7 +893,7 @@
     display: flex;
     flex-direction: column;
     padding: 0.5rem;
-    width: 8%;
+    width: 10%;
   }
 
   .canvasSpace {
