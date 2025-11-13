@@ -1,5 +1,5 @@
 import type { Operation } from "./operation";
-import type { Vec2 } from "./prims";
+import type { Color, Vec2 } from "./prims";
 
 export type Packet =
   | ConnectPacket
@@ -63,10 +63,10 @@ export type PalettePacket = {
   type: "palette"
   data: {
     type: "add",
-    color: number
+    color: Color
   } | {
     type: "sync",
-    colors: number[],
+    colors: Color[],
   } | {
     type: "remove",
     index: number,

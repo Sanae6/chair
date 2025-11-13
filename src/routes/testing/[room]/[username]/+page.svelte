@@ -73,6 +73,11 @@
       alert(packet.reason ?? "connection closed");
       goto("/");
     });
+    connection.setHandler("palette", (packet) => {
+      if (packet.data.type == "sync") {
+        palette = packet.data.colors;
+      }
+    })
 
     const connectedPacket = await connection.connect();
     canvasSize = connectedPacket.size;
@@ -125,6 +130,7 @@
   let stateTrackedTools: Array<Tool> = $state(tools);
   let currentTool: Tool = $state(stateTrackedTools[0]);
   let foregroundColor: Color = $state({ r: 100, g: 149, b: 237, a: 255 });
+  let palette: Color[] = $state([]);
 
   function handleOperation(operation: Operation) {
     surface.handleOperation(operation);
@@ -426,14 +432,32 @@
     });
   }
 
-  let colours:Color[] = $state([]);
-
-  function addColour() {
-    colours.push(foregroundColor);
+  function addPaletteColor() {
+    palette.push(foregroundColor);
+    connection.send({
+      type: "palette",
+      data: {
+        type: "add",
+        color: foregroundColor
+      }
+    });
   }
 
-  function updateColour(newColour: Color) {
-    foregroundColor = newColour;
+  function removePaletteColor(index: number) {
+    connection.send({
+      type: "palette",
+      data: {
+        type: "remove",
+        index
+      }
+    });
+  }
+  function updateForegroundColor(newColor: Color) {
+    foregroundColor = newColor;
+  }
+
+  function paletteHasColor(color: Color) {
+    return palette.find((c) => color.r==c.r && color.g==c.g && color.b==c.b && color.a==c.a) != undefined;
   }
 </script>
 
@@ -494,21 +518,25 @@
       <div class="pixel">
         <ColourPicker bind:color={foregroundColor}></ColourPicker>
       </div>
-      <div class="pixel flex flex-col grow max-h-[53vh]">
-        <p class="shrink">COLOUR PALETTE</p>
+      <div class="pixel flex flex-col min-h-0 grow">
+        <p>COLOUR PALETTE</p>
         <div class="pixelGrid w-[196px] grow">
-          {#each colours as colour}
-          <button 
-            aria-label="rgb({colour.r} {colour.g} {colour.b})"
-            onclick={()=>updateColour(colour)}
-            class="palette" style:background="rgb({colour.r} {colour.g} {colour.b})"
-          ></button>
+          {#each palette as color, i}
+            <button 
+              aria-label="rgb({color.r} {color.g} {color.b})"
+              class="palette" style:background="rgb({color.r} {color.g} {color.b})"
+              onclick={()=>updateForegroundColor(color)}
+              onpointerdown={(e) => {if (e.button == 2) removePaletteColor(i)}}
+              oncontextmenu={(e) => {
+                e.preventDefault();
+              }}
+            ></button>
           {/each}
         </div>
         <button 
-          class="pixelButton shrink" 
-          style="width:100%;"
-          onclick={()=>addColour()}
+          class="pixelButton w-full" 
+          disabled={paletteHasColor(foregroundColor)}
+          onclick={()=>addPaletteColor()}
         ><p>+</p></button>
       </div>
     </div>
@@ -698,6 +726,14 @@
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+
+    font-family: "VT323";
+    font-size: 15px;
+    color: rgb(224, 224, 224);
+  }
+  
+  .pixelButton:disabled p {
+    color: rgb(138, 138, 138);
   }
 
   .pixelButton:active {
@@ -744,12 +780,6 @@
     display: grid;
     margin: 4px;
     place-items: center;
-  }
-
-  .pixelButton p {
-    font-family: "VT323";
-    font-size: 15px;
-    color: rgb(224, 224, 224);
   }
 
   .pixelButton::before {

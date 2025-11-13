@@ -1,4 +1,4 @@
-import type { Vec2 } from "$lib/network/prims";
+import type { Color, Vec2 } from "$lib/network/prims";
 import { Canvas } from "skia-canvas";
 import { Surface } from "./surface";
 import { cachedWritable, subscribe, type CachedWritable } from "$lib/util/stores";
@@ -15,7 +15,7 @@ export class Room {
   private canvas: Canvas;
   private surface: CachedWritable<Surface>;
   private changes: CachedWritable<UserOperation[]> = cachedWritable([]);
-  public palette: CachedWritable<number[]> = cachedWritable([]);
+  public palette: CachedWritable<Color[]> = cachedWritable([]);
   public moderatorPassword: string = Date.now().toString(); // good enough lol
   public users: CachedWritable<Map<string, User>> = cachedWritable(new Map);
   public moderators: CachedWritable<Set<string>> = cachedWritable(new Set);
