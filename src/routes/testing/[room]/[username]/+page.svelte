@@ -519,7 +519,7 @@
         <ColourPicker bind:color={foregroundColor}></ColourPicker>
       </div>
       <div class="pixel flex flex-col min-h-0 grow">
-        <p>COLOUR PALETTE</p>
+        <p class="text-xl">COLOUR PALETTE</p>
         <div class="pixelGrid w-[196px] grow">
           {#each palette as color, i}
             <button 
@@ -574,8 +574,8 @@
     </div>
     <div class="flex flex-col gap-2 p-1 w-[5vw] min-w-[100px]">
       {#if currentTool.applicableSettings.has("brushSize")}
-        <div class="pixel">
-          <p>SIZE</p>
+        <div class="pixel grid">
+          <p class="w-full text-center text-xl">SIZE</p>
           <button
             onclick={() => (currentTool.settings.brushSize += 1)}
             class="pixelButton"
@@ -596,8 +596,8 @@
         </div>
       {/if}
       {#if currentTool.applicableSettings.has("brushShape")}
-        <div class="pixel">
-          <p>SHAPE</p>
+        <div class="pixel grid">
+          <p class="w-full text-center text-xl">SHAPE</p>
           <label class="pixelButton">
             <input
               type="radio"
@@ -619,8 +619,8 @@
         </div>
       {/if}
       {#if currentTool.applicableSettings.has("isFilled")}
-        <div class="pixel">
-          <p>FILLED</p>
+        <div class="pixel grid">
+          <p class="w-full text-center text-xl">FILLED</p>
           <label class="pixelButton">
             <input
               type="radio"
@@ -730,6 +730,11 @@
     font-family: "VT323";
     font-size: 15px;
     color: rgb(224, 224, 224);
+
+    padding: 10px 10px;
+    position: relative;
+    background: linear-gradient(to bottom, #6e6e6e 50%, #404040 50%);
+    z-index: 2;
   }
   
   .pixelButton:disabled p {
@@ -744,7 +749,6 @@
     padding: 10px 10px;
     position: relative;
     background: linear-gradient(to bottom, #a18965 50%, #503f26 50%);
-    width: auto;
     z-index: 2;
   }
 
@@ -809,24 +813,18 @@
     z-index: -1;
   }
 
-  .pixelButton {
-    padding: 10px 10px;
-    position: relative;
-    background: linear-gradient(to bottom, #6e6e6e 50%, #404040 50%);
-    width: auto;
-    z-index: 2;
-  }
-
   .pixel {
     position: relative;
     margin: 10px;
     place-items: center;
-  }
 
-  .pixel p {
     font-family: "VT323";
-    font-size: 15px;
     color: rgb(224, 224, 224);
+
+    padding: 10px 10px;
+    position: relative;
+    background: linear-gradient(to bottom, #6e6e6e 50%, #404040 50%);
+    z-index: 2;
   }
 
   .pixel::before {
@@ -856,15 +854,7 @@
     z-index: -1;
   }
 
-  .pixel {
-    padding: 10px 10px;
-    position: relative;
-    background: linear-gradient(to bottom, #6e6e6e 50%, #404040 50%);
-    width: auto;
-    z-index: 2;
-  }
-
-    .pixelUser {
+  .pixelUser {
     position: relative;
     margin: 10px;
     place-items: center;
