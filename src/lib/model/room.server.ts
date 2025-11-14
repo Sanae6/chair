@@ -5,10 +5,19 @@ import { cachedWritable, subscribe, type CachedWritable } from "$lib/util/stores
 import type { User } from "./user.server";
 import type { Operation } from "$lib/network/operation";
 import type { ModeratorPacket, OperationPacket, Packet, PalettePacket } from "$lib/network/packets";
+import type { Database } from "sql.js";
 
 export type UserOperation = {
   username: string,
   operation: Operation
+};
+
+export type RoomSchema = {
+  image: string,
+  size: Vec2,
+  moderators: string[],
+  palette: Color[],
+  moderatorPassword: string;
 };
 
 export class Room {
@@ -20,8 +29,7 @@ export class Room {
   public users: CachedWritable<Map<string, User>> = cachedWritable(new Map);
   public moderators: CachedWritable<Set<string>> = cachedWritable(new Set);
 
-  constructor(public id: string, public size: Vec2, creator: string) {
-    this.moderators.update(mods => mods.add(creator));
+  constructor(public id: string, public size: Vec2, database: CachedWritable<Database>, json?: RoomSchema) {
     // todo: add the ability to load from filesystem
     this.canvas = new Canvas(size.x, size.y);
     this.surface = cachedWritable(new Surface(size, this.canvas.getContext("2d")));
@@ -46,13 +54,15 @@ export class Room {
       });
 
       if (changes.length >= 50) {
-        this.changes.set([{
-          username: changes.at(-1)!.username,
-          operation: {
-            type: "wholeImage",
-            url: this.canvas.toDataURL("png")
+        this.changes.set([
+          {
+            username: changes.at(-1)!.username,
+            operation: {
+              type: "wholeImage",
+              url: this.canvas.toDataURL("png")
+            }
           }
-        }]);
+        ]);
       }
     });
 
@@ -74,6 +84,42 @@ export class Room {
         }
       });
     });
+
+    if (json) {
+      this.moderators.set(new Set(json.moderators));
+      this.palette.set(json.palette);
+      this.moderatorPassword = json.moderatorPassword;
+
+      this.changes.set([
+        {
+          username: "",
+          operation: {
+            type: "wholeImage",
+            url: json.image
+          }
+        }
+      ]);
+    }
+
+    subscribe([this.surface, this.palette, this.moderators], ([_surface, palette, moderators]) => {
+      database.update(db => {
+        if (db === undefined) return db;
+        try {
+          db.run("INSERT INTO rooms VALUES (?1, ?2) ON CONFLICT DO UPDATE SET json = excluded.json;",
+            [id, JSON.stringify({
+              size,
+              image: this.canvas.toDataURL("png"),
+              moderatorPassword: this.moderatorPassword,
+              moderators: [...moderators],
+              palette
+            } as RoomSchema)]);
+        } catch (error) {
+          console.error(error);
+          // throw "sad";
+        }
+        return db;
+      });
+    })
   }
 
   public broadcast(packet: Packet, fromUser?: string) {

@@ -65,13 +65,13 @@
     connection.setHandler("kicked", () => {
       kickedFirst = true;
       alert("you were kicked from the room!");
-      goto("/");
+      goto("/", {invalidateAll: true});
     });
     connection.setHandler("close", (packet) => {
       console.log("closed");
       if (kickedFirst) return;
-      alert(packet.reason ?? "connection closed");
-      goto("/");
+      alert(packet.reason?.length == 0 ? "connection closed" : packet.reason);
+      goto("/", {invalidateAll: true});
     });
     connection.setHandler("palette", (packet) => {
       if (packet.data.type == "sync") {
