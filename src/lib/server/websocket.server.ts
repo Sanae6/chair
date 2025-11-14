@@ -1,20 +1,16 @@
 import { RoomManager } from "$lib/controller/roomManager.server";
 import { User } from "$lib/model/user.server";
 import type { ConnectPacket, Packet } from "$lib/network/packets";
-import type { PluginOption, ViteDevServer } from "vite"
 import WebSocket, { WebSocketServer } from "ws";
 
 export class Server {
-  private wss: WebSocketServer;
-  constructor(server: ViteDevServer) {
-    const wss = this.wss = new WebSocketServer({
-      server: server.httpServer as any,
-    });
+  constructor() {
+    const wss = (globalThis as any).wss as WebSocketServer;
     wss.on("connection", this.handleConnection);
 
     if (import.meta.hot) {
       import.meta.hot.accept((newWss) => {
-        this.wss.clients.forEach(client => client.close(1000));
+        wss.clients.forEach(client => client.close(1000));
         wss.removeAllListeners("connection");
         console.log(newWss!.Server.prototype.handleConnection)
         wss.on("connection", newWss!.Server.prototype.handleConnection);
