@@ -9,15 +9,20 @@ export class Connection {
   }
 
   private handlers: Map<string, (packet: any) => void> = new Map;
+  private interval: number;
 
   constructor(private socket: WebSocket, private username: string, private room: string) {
     socket.binaryType = "arraybuffer";
+
+    // @ts-ignore
+    this.interval = setInterval(() => this.send({ type: "ping" }), 5000)
 
     socket.addEventListener("message", (event) => {
       this.handlePacket(JSON.parse(event.data));
     });
 
     socket.addEventListener("close", (event) => {
+      clearInterval(this.interval);
       console.log(event.reason);
       this.handlers.get("close")?.({ type: "close", reason: event.reason });
     });

@@ -3,6 +3,7 @@ import type { WebSocket } from "ws";
 import type { Room } from "./room.server";
 
 export class User {
+  private interval: NodeJS.Timeout;
   constructor(
     public name: string,
     public room: Room,
@@ -18,6 +19,8 @@ export class User {
       users.set(name, this);
       return users;
     });
+
+    this.interval = setInterval(() => this.send({ type: "ping" }), 5000);
   }
 
   public kick() {
@@ -27,5 +30,10 @@ export class User {
 
   public send(packet: Packet) {
     this.socket.send(JSON.stringify(packet));
+  }
+
+  public closed() {
+    clearInterval(this.interval);
+
   }
 }

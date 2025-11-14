@@ -4,6 +4,7 @@ import type { Color, Vec2 } from "./prims";
 export type Packet =
   | ConnectPacket
   | ConnectedPacket
+  | PingPacket
   | UserListPacket
   | OperationPacket
   | SyncPacket
@@ -22,6 +23,10 @@ export type ConnectedPacket = {
   type: "connected",
   size: Vec2,
 }
+
+export type PingPacket = {
+  type: "ping"
+};
 
 export type UserListPacket = {
   type: "userList",
