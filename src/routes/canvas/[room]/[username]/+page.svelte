@@ -65,19 +65,19 @@
     connection.setHandler("kicked", () => {
       kickedFirst = true;
       alert("you were kicked from the room!");
-      goto("/", {invalidateAll: true});
+      goto("/", { invalidateAll: true });
     });
     connection.setHandler("close", (packet) => {
       console.log("closed");
       if (kickedFirst) return;
       alert(packet.reason?.length == 0 ? "connection closed" : packet.reason);
-      goto("/", {invalidateAll: true});
+      goto("/", { invalidateAll: true });
     });
     connection.setHandler("palette", (packet) => {
       if (packet.data.type == "sync") {
         palette = packet.data.colors;
       }
-    })
+    });
 
     const connectedPacket = await connection.connect();
     canvasSize = connectedPacket.size;
@@ -438,8 +438,8 @@
       type: "palette",
       data: {
         type: "add",
-        color: foregroundColor
-      }
+        color: foregroundColor,
+      },
     });
   }
 
@@ -448,8 +448,8 @@
       type: "palette",
       data: {
         type: "remove",
-        index
-      }
+        index,
+      },
     });
   }
   function updateForegroundColor(newColor: Color) {
@@ -457,7 +457,12 @@
   }
 
   function paletteHasColor(color: Color) {
-    return palette.find((c) => color.r==c.r && color.g==c.g && color.b==c.b && color.a==c.a) != undefined;
+    return (
+      palette.find(
+        (c) =>
+          color.r == c.r && color.g == c.g && color.b == c.b && color.a == c.a,
+      ) != undefined
+    );
   }
 </script>
 
@@ -476,41 +481,41 @@
   <div class="drawingSpace userListSpace">
     <div class="pixel"><p>JOIN CODE: {data.room}</p></div>
     {#each userList as user}
-    {#if user.username == data.username}
-      <div class="pixelUser flex flex-row">
-        <div style="width:16px; min-width:16px">
-        {#if user.moderator}
-          <img src={crown} alt="Crown"/>
-        {/if}
+      {#if user.username == data.username}
+        <div class="pixelUser flex flex-row">
+          <div style="width:16px; min-width:16px">
+            {#if user.moderator}
+              <img src={crown} alt="Crown" />
+            {/if}
+          </div>
+          <div class="grow overflow-hidden w-[8%]"><p>{user.username}</p></div>
+          {#if user.username != data.username && moderatorPassword.value != ""}
+            <button
+              onclick={() => kickUser(user.username)}
+              style="width:16px; min-width:16px"
+            >
+              <img src={x} alt="Circle" />
+            </button>
+          {/if}
         </div>
-        <div class="grow overflow-hidden w-[8%]"><p>{user.username}</p></div>
-        {#if user.username != data.username && moderatorPassword.value != ""}
-        <button
-          onclick={() => kickUser(user.username)}
-          style="width:16px; min-width:16px"
-        >
-          <img src={x} alt="Circle" />
-        </button>
-        {/if}
-      </div>
-    {:else}
-      <div class="pixel flex flex-row">
-        <div style="width:16px; min-width:16px">
-        {#if user.moderator}
-          <img src={crown} alt="Crown"/>
-        {/if}
+      {:else}
+        <div class="pixel flex flex-row">
+          <div style="width:16px; min-width:16px">
+            {#if user.moderator}
+              <img src={crown} alt="Crown" />
+            {/if}
+          </div>
+          <div class="grow overflow-hidden w-[8%]"><p>{user.username}</p></div>
+          {#if user.username != data.username && moderatorPassword.value != ""}
+            <button
+              onclick={() => kickUser(user.username)}
+              style="width:16px; min-width:16px"
+            >
+              <img src={x} alt="Circle" />
+            </button>
+          {/if}
         </div>
-        <div class="grow overflow-hidden w-[8%]"><p>{user.username}</p></div>
-        {#if user.username != data.username && moderatorPassword.value != ""}
-        <button
-          onclick={() => kickUser(user.username)}
-          style="width:16px; min-width:16px"
-        >
-          <img src={x} alt="Circle" />
-        </button>
-        {/if}
-      </div>
-    {/if}
+      {/if}
     {/each}
   </div>
   <div class="drawingSpace canvasSpace">
@@ -522,22 +527,27 @@
         <p class="text-xl">COLOUR PALETTE</p>
         <div class="pixelGrid w-[196px] grow">
           {#each palette as color, i}
-            <button 
+            <button
               aria-label="rgb({color.r} {color.g} {color.b})"
-              class="palette" style:background="rgb({color.r} {color.g} {color.b})"
-              onclick={()=>updateForegroundColor(color)}
-              onpointerdown={(e) => {if (e.button == 2) removePaletteColor(i)}}
+              class="palette"
+              style:background="rgb({color.r}
+              {color.g}
+              {color.b})"
+              onclick={() => updateForegroundColor(color)}
+              onpointerdown={(e) => {
+                if (e.button == 2) removePaletteColor(i);
+              }}
               oncontextmenu={(e) => {
                 e.preventDefault();
               }}
             ></button>
           {/each}
         </div>
-        <button 
-          class="pixelButton w-full" 
+        <button
+          class="pixelButton w-full"
           disabled={paletteHasColor(foregroundColor)}
-          onclick={()=>addPaletteColor()}
-        ><p>+</p></button>
+          onclick={() => addPaletteColor()}><p>+</p></button
+        >
       </div>
     </div>
     <canvas
@@ -558,18 +568,13 @@
       <div class="flex flex-col gap-2">
         {#each stateTrackedTools as tool}
           <label class="pixelButton">
-            <input
-              type="radio"
-              value={tool}
-              bind:group={currentTool}
-              hidden
-            />
+            <input type="radio" value={tool} bind:group={currentTool} hidden />
             <img src={tool.imgLink} alt="{tool.displayName} image" />
           </label>
         {/each}
       </div>
       <button class="pixelButton" onclick={downloadCanvas}>
-        <img src={download} alt="Download"/>
+        <img src={download} alt="Download" />
       </button>
     </div>
     <div class="flex flex-col gap-2 p-1 w-[5vw] min-w-[100px]">
@@ -736,7 +741,7 @@
     background: linear-gradient(to bottom, #6e6e6e 50%, #404040 50%);
     z-index: 2;
   }
-  
+
   .pixelButton:disabled p {
     color: rgb(138, 138, 138);
   }
@@ -926,7 +931,7 @@
     width: 8%;
   }
 
-  .palette:active{
+  .palette:active {
     top: 2px;
   }
 
@@ -943,9 +948,9 @@
 
   .pixelGrid {
     display: grid;
-    grid-template-columns:repeat(7, 1fr);
+    grid-template-columns: repeat(7, 1fr);
     grid-template-rows: repeat(auto-fit, 28px);
-    overflow:auto;
+    overflow: auto;
     -ms-overflow-style: none;
     scrollbar-width: none;
   }

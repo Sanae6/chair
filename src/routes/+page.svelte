@@ -38,7 +38,7 @@
         const { roomId, moderatorPassword } = json;
         console.log(json);
         localStorage.setItem(`${roomId}.password`, moderatorPassword);
-        goto(`/testing/${roomId}/${username.value}`);
+        goto(`/canvas/${roomId}/${username.value}`);
       }
     } catch (e) {
       console.error(e);
@@ -58,7 +58,7 @@
       if (res.status !== 200) {
         const json = await res.json();
         lastError = json.message;
-      } else goto(`/testing/${joinCode}/${username.value}`);
+      } else goto(`/canvas/${joinCode}/${username.value}`);
     } catch (e) {
       console.error(e);
     }
