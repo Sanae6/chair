@@ -1,5 +1,5 @@
 import type { Color, Vec2 } from "./prims";
-import type { ToolSettings } from "../controller/tool";
+import type { ToolSettings } from "../controller/tool.svelte";
 
 export type Operation = {
   type: "wholeImage", 

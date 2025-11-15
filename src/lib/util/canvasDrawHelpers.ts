@@ -1,4 +1,4 @@
-import type { BrushShape } from "$lib/controller/tool";
+import type { BrushShape } from "$lib/controller/tool.svelte";
 import type { Color, Vec2 } from "$lib/network/prims";
 import { type CanvasRenderingContext2D as SkiaCanvasRenderingContext2D, ImageData as SkiaImageData } from "skia-canvas";
 

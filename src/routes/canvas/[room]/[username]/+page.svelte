@@ -12,7 +12,7 @@
   import type { PageProps } from "./$types";
   import { Surface } from "$lib/model/surface";
   import type { Operation } from "$lib/network/operation";
-  import { tools, type Tool } from "$lib/controller/tool";
+  import { createTool, type Tool } from "$lib/controller/tool.svelte";
   import background from "$lib/assets/background.png";
   import box from "$lib/assets/box.png";
   import circle from "$lib/assets/circ.png";
@@ -127,8 +127,17 @@
     shiftModifier: false,
   };
 
-  let stateTrackedTools: Array<Tool> = $state(tools);
-  let currentTool: Tool = $state(stateTrackedTools[0]);
+  let tools: Array<Tool> = [
+    createTool("pencil"),
+    createTool("eraser"),
+    createTool("line"),
+    createTool("rect"),
+    createTool("ellipse"),
+    createTool("fill"),
+    createTool("eyedropper"),
+    createTool("pan"),
+  ];
+  let currentTool: Tool = $state(tools[0]);
   let foregroundColor: Color = $state({ r: 100, g: 149, b: 237, a: 255 });
   let palette: Color[] = $state([]);
 
@@ -294,6 +303,7 @@
       pointerState.panning = false;
     }
 
+    const modifiersChanged = pointerState.ctrlModifier != event.ctrlKey || pointerState.altModifier != event.altKey || pointerState.shiftModifier != event.shiftKey;
     pointerState.ctrlModifier = event.ctrlKey;
     pointerState.altModifier = event.altKey;
     pointerState.shiftModifier = event.shiftKey;
@@ -302,7 +312,7 @@
     const pointerMoved =
       pointerState.position.x != pointerState.previousPos.x ||
       pointerState.position.y != pointerState.previousPos.y;
-    if (pointerMoved) refreshToolPreviewCanvas();
+    if (pointerMoved || modifiersChanged) refreshToolPreviewCanvas();
 
     // Handle tool usage
     switch (currentTool.applicationType) {
@@ -566,7 +576,7 @@
     ></canvas>
     <div class="flex flex-col justify-between p-2 pt-3 w-[4vw] min-w-[60px]">
       <div class="flex flex-col gap-2">
-        {#each stateTrackedTools as tool}
+        {#each tools as tool}
           <label class="pixelButton">
             <input type="radio" value={tool} bind:group={currentTool} hidden />
             <img src={tool.imgLink} alt="{tool.displayName} image" />
