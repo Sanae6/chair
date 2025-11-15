@@ -216,14 +216,3 @@ export function createTool(toolType: ToolType): Tool {
             return new PanTool();
     }
 }
-
-export const tools: Tool[] = [
-    createTool("pencil"),
-    createTool("eraser"),
-    createTool("line"),
-    createTool("rect"),
-    createTool("ellipse"),
-    createTool("fill"),
-    createTool("eyedropper"),
-    createTool("pan"),
-]
