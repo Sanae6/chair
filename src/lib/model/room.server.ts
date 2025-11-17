@@ -44,6 +44,7 @@ export class Room {
     });
 
     this.changes.subscribe(changes => {
+      const start = performance.now();
       this.surface.update(surface => {
         console.log("applying changes to surface");
         surface.clear();
@@ -52,6 +53,7 @@ export class Room {
 
         return surface;
       });
+      console.log("surface timing", performance.now() - start);
 
       if (changes.length >= 50) {
         this.changes.set([
