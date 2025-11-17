@@ -56,6 +56,7 @@ export function drawPoint(context: SkiaCanvasRenderingContext2D | CanvasRenderin
 
 // Implements Bresenham's Line algorithm: https://en.wikipedia.org/wiki/Bresenham's_line_algorithm
 export function drawLine(context: SkiaCanvasRenderingContext2D | CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, lineStart: Vec2, lineEnd: Vec2, brushSize: number, brushShape: BrushShape, color: Color) {
+    let start = performance.now();
     if (Math.abs(lineEnd.y - lineStart.y) < Math.abs(lineEnd.x - lineStart.x)) {
         if (lineStart.x > lineEnd.x) {
             drawLineLow(context, lineEnd, lineStart, brushSize, brushShape, color);
@@ -69,6 +70,7 @@ export function drawLine(context: SkiaCanvasRenderingContext2D | CanvasRendering
             drawLineHigh(context, lineStart, lineEnd, brushSize, brushShape, color);
         }
     }
+    console.log("drawLine", performance.now() - start);
 }
 
 // Draws line with slopes between -1 and 1
