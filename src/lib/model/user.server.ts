@@ -34,6 +34,5 @@ export class User {
 
   public closed() {
     clearInterval(this.interval);
-
   }
 }

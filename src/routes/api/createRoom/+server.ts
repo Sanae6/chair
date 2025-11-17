@@ -14,7 +14,7 @@ export function POST({ url }) {
   const size = { x: 0, y: 0 };
   try { size.x = parseInt(width) } catch { return error(400, { message: "width must be an integer" }) }
   try { size.y = parseInt(height) } catch { return error(400, { message: "height must be an integer" }) }
-  if (size.x <= 0 || size.y <= 0) return error(400, { message: "width and height must be positive integers" });
+  if (isNaN(size.x) || isNaN(size.y) || size.x <= 0 || size.y <= 0) return error(400, { message: "width and height must be positive integers" });
 
   const roomInfo = RoomManager.instance().createRoom(room, size, creator);
 

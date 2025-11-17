@@ -94,9 +94,9 @@
         <label for="roomName">ROOM NAME:</label>
         <input type="text" id="roomName" bind:value={roomName} />
         <label for="width">W:</label>
-        <input type="text" id="width" bind:value={$width} />
+        <input type="number" id="width" bind:value={$width} />
         <label for="height">H:</label>
-        <input type="text" id="height" bind:value={$height} />
+        <input type="number" id="height" bind:value={$height} />
       </div>
       <button
         type="button"
@@ -104,6 +104,8 @@
         disabled={requesting ||
           $username.length == 0 ||
           roomName.length == 0 ||
+          isNaN($width) ||
+          isNaN($height) ||
           $width <= 0 ||
           $height <= 0}
         onclick={createRoom}
