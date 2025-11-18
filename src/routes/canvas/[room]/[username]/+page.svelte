@@ -490,43 +490,45 @@
 <div class="drawingSpaceContainer">
   <div class="drawingSpace userListSpace">
     <div class="pixel"><p>JOIN CODE: {data.room}</p></div>
-    {#each userList as user}
-      {#if user.username == data.username}
-        <div class="pixelUser flex flex-row">
-          <div style="width:16px; min-width:16px">
-            {#if user.moderator}
-              <img src={crown} alt="Crown" />
+    <div class="overflow-auto hideSrollbar">    
+      {#each userList as user}
+        {#if user.username == data.username}
+          <div class="pixelUser flex flex-row">
+            <div style="width:16px; min-width:16px">
+              {#if user.moderator}
+                <img src={crown} alt="Crown" />
+              {/if}
+            </div>
+            <div class="grow overflow-hidden w-[8%]"><p>{user.username}</p></div>
+            {#if user.username != data.username && moderatorPassword.value != ""}
+              <button
+                onclick={() => kickUser(user.username)}
+                style="width:16px; min-width:16px"
+              >
+                <img src={x} alt="Circle" />
+              </button>
             {/if}
           </div>
-          <div class="grow overflow-hidden w-[8%]"><p>{user.username}</p></div>
-          {#if user.username != data.username && moderatorPassword.value != ""}
-            <button
-              onclick={() => kickUser(user.username)}
-              style="width:16px; min-width:16px"
-            >
-              <img src={x} alt="Circle" />
-            </button>
-          {/if}
-        </div>
-      {:else}
-        <div class="pixel flex flex-row">
-          <div style="width:16px; min-width:16px">
-            {#if user.moderator}
-              <img src={crown} alt="Crown" />
+        {:else}
+          <div class="pixel flex flex-row">
+            <div style="width:16px; min-width:16px">
+              {#if user.moderator}
+                <img src={crown} alt="Crown" />
+              {/if}
+            </div>
+            <div class="grow overflow-hidden w-[8%]"><p>{user.username}</p></div>
+            {#if user.username != data.username && moderatorPassword.value != ""}
+              <button
+                onclick={() => kickUser(user.username)}
+                style="width:16px; min-width:16px"
+              >
+                <img src={x} alt="Circle" />
+              </button>
             {/if}
           </div>
-          <div class="grow overflow-hidden w-[8%]"><p>{user.username}</p></div>
-          {#if user.username != data.username && moderatorPassword.value != ""}
-            <button
-              onclick={() => kickUser(user.username)}
-              style="width:16px; min-width:16px"
-            >
-              <img src={x} alt="Circle" />
-            </button>
-          {/if}
-        </div>
-      {/if}
-    {/each}
+        {/if}
+      {/each}
+    </div>
   </div>
   <div class="drawingSpace canvasSpace">
     <div class="flex flex-col p-2">
@@ -535,7 +537,7 @@
       </div>
       <div class="pixel flex flex-col min-h-0 grow">
         <p class="text-xl">COLOUR PALETTE</p>
-        <div class="pixelGrid w-[196px] grow">
+        <div class="pixelGrid w-[196px] grow hideSrollbar">
           {#each palette as color, i}
             <button
               aria-label="rgb({color.r} {color.g} {color.b})"
@@ -961,11 +963,14 @@
     grid-template-columns: repeat(7, 1fr);
     grid-template-rows: repeat(auto-fit, 28px);
     overflow: auto;
+  }
+
+  .hideSrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
 
-  .pixelGrid::-webkit-scrollbar {
+  .hideSrollbar::-webkit-scrollbar {
     display: none;
   }
 </style>
